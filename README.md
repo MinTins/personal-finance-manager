@@ -10,7 +10,7 @@
 
 Персональний фінансовий трекер - веб-застосунок для управління особистими фінансами з можливістю відстеження доходів, витрат, створення бюджетів та візуалізації фінансової активності.
 
-### Проміжні лабораторні роботи:
+### Реалізовані лабораторні роботи:
 
 ✅ **Лабораторна №1** - Backend розробка (Flask, MySQL, REST API)  
 ✅ **Лабораторна №2** - Frontend розробка (React, динамічний інтерфейс)  
@@ -71,59 +71,42 @@
 
 ---
 
-## Швидкий старт (Windows 11)
+## Швидкий старт
 
 ### Передумови:
-- Python 3.10+ ([завантажити](https://www.python.org/downloads/))
-- Node.js 18+ ([завантажити](https://nodejs.org/))
-- MySQL 8.0 ([завантажити](https://dev.mysql.com/downloads/installer/))
-- Git ([завантажити](https://git-scm.com/download/win))
+- Python 3.10+
+- Node.js 18+
+- MySQL 8.0
+- Git
 
 ### 1. Клонування репозиторію
-```powershell
+```bash
 git clone https://github.com/MinTins/personal-finance-manager.git
 cd personal-finance-manager
 ```
 
-### 2. Створення структури проекту
-```powershell
-# PowerShell
-.\setup-structure.ps1
+### 2. Налаштування Backend
 
-# Або через CMD
-setup-structure.bat
-```
-
-### 3. Налаштування MySQL
-```powershell
-# Запустіть MySQL Command Line Client або MySQL Workbench
-# Виконайте:
-mysql -u root -p
-# Введіть пароль root користувача
-
-# В MySQL консолі:
-source backend/database.sql
-# Або скопіюйте вміст database.sql і виконайте в Workbench
-```
-
-### 4. Налаштування Backend
-```powershell
+```bash
 cd backend
 
 # Створення віртуального середовища
 python -m venv venv
 
-# Активація віртуального середовища
+# Активація (Windows)
 venv\Scripts\activate
+# Активація (Linux/Mac)
+source venv/bin/activate
 
 # Встановлення залежностей
 pip install -r requirements.txt
 
-# Копіювання конфігурації
-copy .env.example .env
+# Налаштування бази даних
+mysql -u root -p < database.sql
 
-# Відредагуйте .env файл у текстовому редакторі
-# notepad .env
+# Створення .env файлу
+cp .env.example .env
+# Відредагуйте .env з вашими налаштуваннями
 
 # Запуск сервера
 python run.py
@@ -131,9 +114,10 @@ python run.py
 
 Backend буде доступний на: `http://localhost:5000`
 
-### 5. Налаштування Frontend (у новому терміналі)
-```powershell
-cd frontend
+### 3. Налаштування Frontend
+
+```bash
+cd ../frontend
 
 # Встановлення залежностей
 npm install
@@ -143,10 +127,6 @@ npm run dev
 ```
 
 Frontend буде доступний на: `http://localhost:5173`
-
-### Тестові дані для входу:
-- **Username:** `demo_user`
-- **Password:** `password123`
 
 ---
 
