@@ -66,6 +66,16 @@ export const formatMoney = (amount, currency = 'UAH') => {
 };
 
 /**
+ * Форматує число у грошовий формат (аліас для formatMoney)
+ * @param {number} amount - Сума для форматування
+ * @param {string} currency - Валюта (за замовчуванням 'UAH')
+ * @returns {string} Відформатована сума
+ */
+export const formatCurrency = (amount, currency = 'UAH') => {
+  return formatMoney(amount, currency);
+};
+
+/**
  * Затримка виконання на вказаний час
  * @param {number} ms - Час затримки у мілісекундах
  * @returns {Promise} Проміс, який вирішується після затримки
@@ -136,4 +146,43 @@ export const objectToQueryParams = (params) => {
     .filter(([_, value]) => value !== undefined && value !== null && value !== '')
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&');
+};
+
+/**
+ * Розраховує прогрес бюджету
+ * @param {number} spent - Витрачена сума
+ * @param {number} total - Загальна сума бюджету
+ * @returns {number} Прогрес у відсотках
+ */
+export const calculateBudgetProgress = (spent, total) => {
+  if (typeof spent !== 'number' || typeof total !== 'number' || total <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.max(0, (spent / total) * 100));
+};
+
+/**
+ * Отримує колір для прогресу бюджету
+ * @param {number} progress - Прогрес у відсотках
+ * @returns {string} Колір ('green', 'yellow' або 'red')
+ */
+export const getBudgetProgressColor = (progress) => {
+  if (typeof progress !== 'number') return 'gray';
+  if (progress < 50) return 'green';
+  if (progress < 80) return 'yellow';
+  return 'red';
+};
+
+/**
+ * Генерує кольори для діаграми
+ * @param {number} count - Кількість кольорів для генерації
+ * @returns {string[]} Масив кольорів у форматі HEX
+ */
+export const generateChartColors = (count = 5) => {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    const hue = (i * 360) / count;
+    colors.push(`hsl(${hue}, 70%, 50%)`);
+  }
+  return colors;
 };
