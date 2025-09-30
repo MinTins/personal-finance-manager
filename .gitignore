@@ -1,1 +1,10 @@
+frontend/node_modules/*
+backend/venv/*
+__pycache__/
+*.pyc
+instance
+.DS_Store
 .env
+.vscode/
+.idea/
+*.log
