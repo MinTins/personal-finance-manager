@@ -4,6 +4,7 @@ from app import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from sqlalchemy import func
+from decimal import Decimal
 
 transactions_bp = Blueprint('transactions', __name__)
 
@@ -98,11 +99,12 @@ def create_transaction():
     
     db.session.add(new_transaction)
     
-    # Оновлення балансу рахунку
+    # Оновлення балансу рахунку - ВИКОРИСТОВУЄМО DECIMAL
+    amount = Decimal(str(data['amount']))
     if data['transaction_type'] == 'income':
-        account.balance += float(data['amount'])
+        account.balance = account.balance + amount
     elif data['transaction_type'] == 'expense':
-        account.balance -= float(data['amount'])
+        account.balance = account.balance - amount
     
     db.session.commit()
     
@@ -136,7 +138,7 @@ def update_transaction(transaction_id):
     if not transaction:
         return jsonify({'error': 'Transaction not found'}), 404
     
-    old_amount = float(transaction.amount)
+    old_amount = Decimal(str(transaction.amount))
     old_type = transaction.transaction_type
     
     # Оновлення полів
@@ -167,18 +169,18 @@ def update_transaction(transaction_id):
         
         # Відміна старої транзакції
         if old_type == 'income':
-            account.balance -= old_amount
+            account.balance = account.balance - old_amount
         elif old_type == 'expense':
-            account.balance += old_amount
+            account.balance = account.balance + old_amount
         
         # Застосування нової транзакції
         new_type = data.get('transaction_type', old_type)
-        new_amount = float(data.get('amount', old_amount))
+        new_amount = Decimal(str(data.get('amount', old_amount)))
         
         if new_type == 'income':
-            account.balance += new_amount
+            account.balance = account.balance + new_amount
         elif new_type == 'expense':
-            account.balance -= new_amount
+            account.balance = account.balance - new_amount
         
         if 'transaction_type' in data:
             transaction.transaction_type = new_type
@@ -203,10 +205,11 @@ def delete_transaction(transaction_id):
     # Оновлення балансу рахунку
     account = Account.query.filter_by(id=transaction.account_id).first()
     if account:
+        amount = Decimal(str(transaction.amount))
         if transaction.transaction_type == 'income':
-            account.balance -= float(transaction.amount)
+            account.balance = account.balance - amount
         elif transaction.transaction_type == 'expense':
-            account.balance += float(transaction.amount)
+            account.balance = account.balance + amount
     
     db.session.delete(transaction)
     db.session.commit()

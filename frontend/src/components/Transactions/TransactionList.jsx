@@ -18,17 +18,14 @@ const TransactionList = () => {
     end_date: ''
   })
 
-  // Завантаження транзакцій та категорій
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
         
-        // Завантаження транзакцій з фільтрами
         const transactionsData = await getTransactions(filters)
         setTransactions(transactionsData)
         
-        // Завантаження всіх категорій
         const allCategories = await getCategories()
         setCategories(allCategories)
       } catch (err) {
@@ -41,13 +38,11 @@ const TransactionList = () => {
     fetchData()
   }, [filters])
 
-  // Обробка зміни фільтрів
   const handleFilterChange = (e) => {
     const { name, value } = e.target
     setFilters({ ...filters, [name]: value })
   }
 
-  // Скидання фільтрів
   const resetFilters = () => {
     setFilters({
       type: '',
@@ -57,7 +52,6 @@ const TransactionList = () => {
     })
   }
 
-  // Додавання нової транзакції
   const handleAddTransaction = async (formData) => {
     try {
       const newTransaction = await createTransaction(formData)
@@ -68,7 +62,6 @@ const TransactionList = () => {
     }
   }
 
-  // Оновлення існуючої транзакції
   const handleUpdateTransaction = async (formData) => {
     try {
       const updatedTransaction = await updateTransaction(editingTransaction.id, formData)
@@ -86,7 +79,6 @@ const TransactionList = () => {
     }
   }
 
-  // Видалення транзакції
   const handleDeleteTransaction = async (id) => {
     if (!window.confirm('Ви впевнені, що хочете видалити цю транзакцію?')) {
       return
@@ -100,13 +92,11 @@ const TransactionList = () => {
     }
   }
 
-  // Відкриття форми для редагування
   const openEditForm = (transaction) => {
     setEditingTransaction(transaction)
     setShowForm(true)
   }
 
-  // Закриття форми
   const closeForm = () => {
     setShowForm(false)
     setEditingTransaction(null)
@@ -139,7 +129,6 @@ const TransactionList = () => {
         </div>
       )}
       
-      {/* Форма для створення/редагування транзакції */}
       {showForm && (
         <div className="card mb-6">
           <h2 className="text-xl font-semibold mb-4">
@@ -153,7 +142,6 @@ const TransactionList = () => {
         </div>
       )}
       
-      {/* Фільтри */}
       <div className="card mb-6">
         <h2 className="text-lg font-semibold mb-4">Фільтри</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -233,7 +221,6 @@ const TransactionList = () => {
         </div>
       </div>
 
-      {/* Список транзакцій */}
       {transactions.length === 0 ? (
         <div className="card p-6 text-center">
           <p className="text-gray-500">Транзакції не знайдено. Спробуйте змінити фільтри або додайте нову транзакцію.</p>
@@ -245,6 +232,7 @@ const TransactionList = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Рахунок</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категорія</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Опис</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сума</th>
@@ -259,10 +247,13 @@ const TransactionList = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      transaction.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      transaction.transaction_type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {transaction.type === 'income' ? 'Дохід' : 'Витрата'}
+                      {transaction.transaction_type === 'income' ? 'Дохід' : 'Витрата'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {transaction.account_name || '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -277,8 +268,8 @@ const TransactionList = () => {
                     {transaction.description || '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+                    <span className={`font-medium ${transaction.transaction_type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {transaction.transaction_type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
