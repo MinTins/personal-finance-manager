@@ -8,7 +8,7 @@ categories_bp = Blueprint('categories', __name__)
 @categories_bp.route('', methods=['GET'])
 @jwt_required()
 def get_categories():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())  # Конвертуємо в int
     
     # Фільтрація за типом (доходи/витрати)
     category_type = request.args.get('type')
@@ -27,7 +27,7 @@ def get_categories():
 @categories_bp.route('', methods=['POST'])
 @jwt_required()
 def create_category():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())  # Конвертуємо в int
     data = request.get_json()
     
     # Перевірка наявності необхідних полів
@@ -54,10 +54,24 @@ def create_category():
         'category': new_category.to_dict()
     }), 201
 
+@categories_bp.route('/<int:category_id>', methods=['GET'])
+@jwt_required()
+def get_category(category_id):
+    user_id = int(get_jwt_identity())  # Конвертуємо в int
+    
+    category = Category.query.filter_by(id=category_id, user_id=user_id).first()
+    
+    if not category:
+        return jsonify({'error': 'Category not found'}), 404
+    
+    return jsonify({
+        'category': category.to_dict()
+    }), 200
+
 @categories_bp.route('/<int:category_id>', methods=['PUT'])
 @jwt_required()
 def update_category(category_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())  # Конвертуємо в int
     data = request.get_json()
     
     # Пошук категорії
@@ -73,6 +87,10 @@ def update_category(category_id):
     if 'color' in data:
         category.color = data['color']
     
+    # Тип категорії не можна змінювати (щоб не зламати транзакції)
+    # if 'type' in data:
+    #     category.type = data['type']
+    
     db.session.commit()
     
     return jsonify({
@@ -83,7 +101,7 @@ def update_category(category_id):
 @categories_bp.route('/<int:category_id>', methods=['DELETE'])
 @jwt_required()
 def delete_category(category_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())  # Конвертуємо в int
     
     # Пошук категорії
     category = Category.query.filter_by(id=category_id, user_id=user_id).first()

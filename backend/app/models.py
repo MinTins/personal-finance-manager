@@ -32,6 +32,7 @@ class Category(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     name = db.Column(db.String(50), nullable=False)
     type = db.Column(db.Enum('income', 'expense'), nullable=False)
+    color = db.Column(db.String(7), default='#3B82F6')  # Додано поле color
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -42,7 +43,8 @@ class Category(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'type': self.type
+            'type': self.type,
+            'color': self.color  # Додано в response
         }
 
 class Account(db.Model):

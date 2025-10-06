@@ -38,6 +38,12 @@ const Navbar = ({ user, onLogout }) => {
               >
                 Бюджети
               </Link>
+              <Link 
+                to="/categories" 
+                className="border-transparent text-gray-600 hover:text-gray-900 hover:border-primary-500 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                Категорії
+              </Link>
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -97,6 +103,13 @@ const Navbar = ({ user, onLogout }) => {
               onClick={toggleMobileMenu}
             >
               Бюджети
+            </Link>
+            <Link
+              to="/categories"
+              className="text-gray-600 hover:bg-gray-50 hover:text-gray-900 block px-3 py-2 rounded-md text-base font-medium"
+              onClick={toggleMobileMenu}
+            >
+              Категорії
             </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">

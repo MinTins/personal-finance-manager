@@ -6,6 +6,7 @@ import Register from './components/Auth/Register'
 import Dashboard from './components/Dashboard/Dashboard'
 import TransactionList from './components/Transactions/TransactionList'
 import BudgetList from './components/Budgets/BudgetList'
+import CategoryList from './components/Categories/CategoryList'
 import Navbar from './components/common/Navbar'
 import Sidebar from './components/common/Sidebar'
 
@@ -63,6 +64,7 @@ function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/transactions" element={<TransactionList />} />
                 <Route path="/budgets" element={<BudgetList />} />
+                <Route path="/categories" element={<CategoryList />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
