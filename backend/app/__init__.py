@@ -36,12 +36,14 @@ def create_app():
         from app.routes.transactions import transactions_bp
         from app.routes.categories import categories_bp
         from app.routes.budgets import budgets_bp
+        from app.routes.accounts import accounts_bp
         from app.routes.exchange_rates import exchange_rates_bp
         
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
         app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
         app.register_blueprint(categories_bp, url_prefix='/api/categories')
         app.register_blueprint(budgets_bp, url_prefix='/api/budgets')
+        app.register_blueprint(accounts_bp, url_prefix='/api/accounts')
         app.register_blueprint(exchange_rates_bp, url_prefix='/api/exchange-rates')
         
         # Створення таблиць БД, якщо вони не існують

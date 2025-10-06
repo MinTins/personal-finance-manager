@@ -9,11 +9,13 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     transactions = db.relationship('Transaction', backref='user', lazy=True, cascade='all, delete-orphan')
     categories = db.relationship('Category', backref='user', lazy=True, cascade='all, delete-orphan')
     budgets = db.relationship('Budget', backref='user', lazy=True, cascade='all, delete-orphan')
+    accounts = db.relationship('Account', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def to_dict(self):
         return {
@@ -27,10 +29,10 @@ class Category(db.Model):
     __tablename__ = 'categories'
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=True)
     name = db.Column(db.String(50), nullable=False)
     type = db.Column(db.Enum('income', 'expense'), nullable=False)
-    color = db.Column(db.String(7), default='#3B82F6')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
     transactions = db.relationship('Transaction', backref='category', lazy=True)
@@ -40,8 +42,31 @@ class Category(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'type': self.type,
-            'color': self.color
+            'type': self.type
+        }
+
+class Account(db.Model):
+    __tablename__ = 'accounts'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    balance = db.Column(db.Numeric(15, 2), default=0)
+    currency = db.Column(db.String(3), default='UAH')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    transactions = db.relationship('Transaction', backref='account', lazy=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'balance': float(self.balance),
+            'currency': self.currency,
+            'is_active': self.is_active,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
 
 class Transaction(db.Model):
@@ -49,23 +74,25 @@ class Transaction(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete=None))
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey('accounts.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete='SET NULL'))
+    amount = db.Column(db.Numeric(15, 2), nullable=False)
+    transaction_type = db.Column(db.Enum('income', 'expense', 'transfer'), nullable=False)
     description = db.Column(db.Text)
-    type = db.Column(db.Enum('income', 'expense'), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
         return {
             'id': self.id,
+            'account_id': self.account_id,
+            'account_name': self.account.name if self.account else None,
             'category_id': self.category_id,
             'category_name': self.category.name if self.category else None,
-            'category_color': self.category.color if self.category else '#808080',
             'amount': float(self.amount),
             'description': self.description,
-            'type': self.type,
-            'date': self.date.strftime('%Y-%m-%d'),
+            'transaction_type': self.transaction_type,
+            'date': self.date.strftime('%Y-%m-%d %H:%M:%S'),
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }
 
@@ -75,19 +102,18 @@ class Budget(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete='CASCADE'))
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
-    period = db.Column(db.Enum('week', 'month', 'year'), nullable=False, default='month')
+    amount = db.Column(db.Numeric(15, 2), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
         return {
             'id': self.id,
             'category_id': self.category_id,
             'category_name': self.category.name if self.category else None,
-            'category_color': self.category.color if self.category else '#808080',
             'amount': float(self.amount),
-            'period': self.period,
             'start_date': self.start_date.strftime('%Y-%m-%d'),
-            'end_date': self.end_date.strftime('%Y-%m-%d')
+            'end_date': self.end_date.strftime('%Y-%m-%d'),
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         }

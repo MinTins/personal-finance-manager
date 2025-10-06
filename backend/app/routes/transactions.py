@@ -1,51 +1,54 @@
 from flask import Blueprint, request, jsonify
-from app.models import Transaction, Category
+from app.models import Transaction, Category, Account
 from app import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
+from sqlalchemy import func
 
 transactions_bp = Blueprint('transactions', __name__)
 
 @transactions_bp.route('', methods=['GET'])
 @jwt_required()
 def get_transactions():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
-    # Параметри фільтрації
-    type_filter = request.args.get('type')  # income або expense
-    category_id = request.args.get('category_id')
+    # Отримання параметрів фільтрації
+    category_id = request.args.get('category_id', type=int)
+    account_id = request.args.get('account_id', type=int)
+    transaction_type = request.args.get('type')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     
-    # Базовий запит
     query = Transaction.query.filter_by(user_id=user_id)
     
-    # Додавання фільтрів, якщо вони є
-    if type_filter:
-        query = query.filter_by(type=type_filter)
-        
+    # Застосування фільтрів
     if category_id:
         query = query.filter_by(category_id=category_id)
-        
+    
+    if account_id:
+        query = query.filter_by(account_id=account_id)
+    
+    if transaction_type:
+        query = query.filter_by(transaction_type=transaction_type)
+    
     if start_date:
         try:
-            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-            query = query.filter(Transaction.date >= start_date_obj)
+            start = datetime.strptime(start_date, '%Y-%m-%d')
+            query = query.filter(Transaction.date >= start)
         except ValueError:
             return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
     
     if end_date:
         try:
-            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-            query = query.filter(Transaction.date <= end_date_obj)
+            end = datetime.strptime(end_date, '%Y-%m-%d')
+            query = query.filter(Transaction.date <= end)
         except ValueError:
             return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
     
-    # Сортування за датою (спочатку найновіші)
     transactions = query.order_by(Transaction.date.desc()).all()
     
     return jsonify({
-        'transactions': [transaction.to_dict() for transaction in transactions]
+        'transactions': [t.to_dict() for t in transactions]
     }), 200
 
 @transactions_bp.route('', methods=['POST'])
@@ -55,41 +58,52 @@ def create_transaction():
     data = request.get_json()
     
     # Перевірка наявності необхідних полів
-    if not all(k in data for k in ('amount', 'type', 'date')):
-        return jsonify({'error': 'Missing required fields'}), 400
+    if not all(k in data for k in ('account_id', 'amount', 'transaction_type', 'date')):
+        return jsonify({'error': 'Missing required fields: account_id, amount, transaction_type, date'}), 400
+    
+    # Перевірка account
+    account = Account.query.filter_by(id=data['account_id'], user_id=user_id).first()
+    if not account:
+        return jsonify({'error': 'Account not found'}), 404
     
     # Перевірка типу транзакції
-    if data['type'] not in ['income', 'expense']:
-        return jsonify({'error': 'Type must be either "income" or "expense"'}), 400
+    if data['transaction_type'] not in ['income', 'expense', 'transfer']:
+        return jsonify({'error': 'Transaction type must be "income", "expense", or "transfer"'}), 400
     
-    # Перевірка категорії, якщо вона вказана
+    # Перевірка категорії (якщо вона є)
     category_id = data.get('category_id')
     if category_id:
         category = Category.query.filter_by(id=category_id, user_id=user_id).first()
         if not category:
             return jsonify({'error': 'Category not found'}), 404
-        
-        # Перевірка, чи збігається тип категорії з типом транзакції
-        if category.type != data['type']:
-            return jsonify({'error': 'Category type does not match transaction type'}), 400
+    else:
+        category_id = None
     
-    # Перетворення дати з рядка у об'єкт Date
+    # Перетворення дати з рядка у об'єкт DateTime
     try:
-        transaction_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        transaction_date = datetime.strptime(data['date'], '%Y-%m-%d')
     except ValueError:
         return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
     
     # Створення нової транзакції
     new_transaction = Transaction(
         user_id=user_id,
+        account_id=data['account_id'],
         category_id=category_id,
         amount=data['amount'],
         description=data.get('description', ''),
-        type=data['type'],
+        transaction_type=data['transaction_type'],
         date=transaction_date
     )
     
     db.session.add(new_transaction)
+    
+    # Оновлення балансу рахунку
+    if data['transaction_type'] == 'income':
+        account.balance += data['amount']
+    elif data['transaction_type'] == 'expense':
+        account.balance -= data['amount']
+    
     db.session.commit()
     
     return jsonify({
@@ -102,7 +116,6 @@ def create_transaction():
 def get_transaction(transaction_id):
     user_id = get_jwt_identity()
     
-    # Пошук транзакції
     transaction = Transaction.query.filter_by(id=transaction_id, user_id=user_id).first()
     
     if not transaction:
@@ -118,11 +131,13 @@ def update_transaction(transaction_id):
     user_id = get_jwt_identity()
     data = request.get_json()
     
-    # Пошук транзакції
     transaction = Transaction.query.filter_by(id=transaction_id, user_id=user_id).first()
     
     if not transaction:
         return jsonify({'error': 'Transaction not found'}), 404
+    
+    old_amount = float(transaction.amount)
+    old_type = transaction.transaction_type
     
     # Оновлення полів
     if 'amount' in data:
@@ -133,22 +148,40 @@ def update_transaction(transaction_id):
     
     if 'date' in data:
         try:
-            transaction.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            transaction.date = datetime.strptime(data['date'], '%Y-%m-%d')
         except ValueError:
             return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
     
     if 'category_id' in data:
         if data['category_id']:
-            # Перевірка існування категорії та її приналежності користувачу
             category = Category.query.filter_by(id=data['category_id'], user_id=user_id).first()
             if not category:
                 return jsonify({'error': 'Category not found'}), 404
-            
-            # Перевірка, чи збігається тип категорії з типом транзакції
-            if category.type != transaction.type:
-                return jsonify({'error': 'Category type does not match transaction type'}), 400
+            transaction.category_id = data['category_id']
+        else:
+            transaction.category_id = None
+    
+    # Оновлення балансу рахунку при зміні суми або типу
+    if 'amount' in data or 'transaction_type' in data:
+        account = Account.query.filter_by(id=transaction.account_id).first()
         
-        transaction.category_id = data['category_id']
+        # Відміна старої транзакції
+        if old_type == 'income':
+            account.balance -= old_amount
+        elif old_type == 'expense':
+            account.balance += old_amount
+        
+        # Застосування нової транзакції
+        new_type = data.get('transaction_type', old_type)
+        new_amount = data.get('amount', old_amount)
+        
+        if new_type == 'income':
+            account.balance += new_amount
+        elif new_type == 'expense':
+            account.balance -= new_amount
+        
+        if 'transaction_type' in data:
+            transaction.transaction_type = new_type
     
     db.session.commit()
     
@@ -162,11 +195,18 @@ def update_transaction(transaction_id):
 def delete_transaction(transaction_id):
     user_id = get_jwt_identity()
     
-    # Пошук транзакції
     transaction = Transaction.query.filter_by(id=transaction_id, user_id=user_id).first()
     
     if not transaction:
         return jsonify({'error': 'Transaction not found'}), 404
+    
+    # Оновлення балансу рахунку
+    account = Account.query.filter_by(id=transaction.account_id).first()
+    if account:
+        if transaction.transaction_type == 'income':
+            account.balance -= float(transaction.amount)
+        elif transaction.transaction_type == 'expense':
+            account.balance += float(transaction.amount)
     
     db.session.delete(transaction)
     db.session.commit()
@@ -180,66 +220,37 @@ def delete_transaction(transaction_id):
 def get_summary():
     user_id = get_jwt_identity()
     
-    # Параметри фільтрації
+    # Отримання параметрів фільтрації
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     
-    # Базовий запит для транзакцій користувача
     query = Transaction.query.filter_by(user_id=user_id)
     
-    # Додавання фільтрів за датою, якщо вони є
     if start_date:
         try:
-            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
-            query = query.filter(Transaction.date >= start_date_obj)
+            start = datetime.strptime(start_date, '%Y-%m-%d')
+            query = query.filter(Transaction.date >= start)
         except ValueError:
-            return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+            return jsonify({'error': 'Invalid start_date format'}), 400
     
     if end_date:
         try:
-            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-            query = query.filter(Transaction.date <= end_date_obj)
+            end = datetime.strptime(end_date, '%Y-%m-%d')
+            query = query.filter(Transaction.date <= end)
         except ValueError:
-            return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+            return jsonify({'error': 'Invalid end_date format'}), 400
     
-    # Отримання всіх транзакцій
     transactions = query.all()
     
-    # Розрахунок загальних сум
-    total_income = sum(float(t.amount) for t in transactions if t.type == 'income')
-    total_expense = sum(float(t.amount) for t in transactions if t.type == 'expense')
+    total_income = sum(float(t.amount) for t in transactions if t.transaction_type == 'income')
+    total_expense = sum(float(t.amount) for t in transactions if t.transaction_type == 'expense')
     balance = total_income - total_expense
-    
-    # Групування за категоріями
-    categories_summary = {}
-    for transaction in transactions:
-        category_name = transaction.category.name if transaction.category else 'Без категорії'
-        category_id = transaction.category_id if transaction.category else 0
-        category_color = transaction.category.color if transaction.category else '#808080'
-        
-        if transaction.type not in categories_summary:
-            categories_summary[transaction.type] = {}
-            
-        if category_id not in categories_summary[transaction.type]:
-            categories_summary[transaction.type][category_id] = {
-                'id': category_id,
-                'name': category_name,
-                'color': category_color,
-                'amount': 0
-            }
-            
-        categories_summary[transaction.type][category_id]['amount'] += float(transaction.amount)
-    
-    # Перетворення словників у списки для відповіді
-    income_categories = list(categories_summary.get('income', {}).values())
-    expense_categories = list(categories_summary.get('expense', {}).values())
     
     return jsonify({
         'summary': {
             'total_income': total_income,
             'total_expense': total_expense,
             'balance': balance,
-            'income_categories': income_categories,
-            'expense_categories': expense_categories
+            'transaction_count': len(transactions)
         }
     }), 200

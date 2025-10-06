@@ -36,8 +36,8 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     
-    # Створення токену
-    access_token = create_access_token(identity=new_user.id)
+    # Створення токену - ВАЖЛИВО: конвертуємо id в string
+    access_token = create_access_token(identity=str(new_user.id))
     
     return jsonify({
         'message': 'User registered successfully',
@@ -50,17 +50,24 @@ def login():
     data = request.get_json()
     
     # Перевірка наявності необхідних полів
-    if not all(k in data for k in ('email', 'password')):
-        return jsonify({'error': 'Missing required fields'}), 400
+    if not data.get('password'):
+        return jsonify({'error': 'Password is required'}), 400
     
-    # Пошук користувача
-    user = User.query.filter_by(email=data['email']).first()
+    # Підтримка логіну як через email, так і через username
+    user = None
+    if data.get('email'):
+        user = User.query.filter_by(email=data['email']).first()
+    elif data.get('username'):
+        user = User.query.filter_by(username=data['username']).first()
+    else:
+        return jsonify({'error': 'Email or username is required'}), 400
     
+    # Перевірка паролю
     if not user or not bcrypt.checkpw(data['password'].encode('utf-8'), user.password_hash.encode('utf-8')):
-        return jsonify({'error': 'Invalid email or password'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
     
-    # Створення токену
-    access_token = create_access_token(identity=user.id)
+    # Створення токену - ВАЖЛИВО: конвертуємо id в string
+    access_token = create_access_token(identity=str(user.id))
     
     return jsonify({
         'message': 'Login successful',
@@ -71,7 +78,10 @@ def login():
 @auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def me():
-    user_id = get_jwt_identity()
+    # get_jwt_identity() тепер поверне string, треба конвертувати в int
+    user_id_str = get_jwt_identity()
+    user_id = int(user_id_str)
+    
     user = User.query.get(user_id)
     
     if not user:

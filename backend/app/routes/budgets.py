@@ -2,35 +2,55 @@ from flask import Blueprint, request, jsonify
 from app.models import Budget, Category, Transaction
 from app import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime
+from datetime import datetime, timedelta
 
 budgets_bp = Blueprint('budgets', __name__)
 
 @budgets_bp.route('', methods=['GET'])
 @jwt_required()
 def get_budgets():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
-    # Фільтрація за періодом
+    # Фільтрація за періодом (опціонально)
     period = request.args.get('period')
     
     query = Budget.query.filter_by(user_id=user_id)
     
+    # Якщо передано period, фільтруємо за датами
     if period:
-        query = query.filter_by(period=period)
+        today = datetime.now().date()
+        if period == 'week':
+            start = today - timedelta(days=today.weekday())
+            end = start + timedelta(days=6)
+        elif period == 'month':
+            start = today.replace(day=1)
+            next_month = today.replace(day=28) + timedelta(days=4)
+            end = next_month - timedelta(days=next_month.day)
+        elif period == 'year':
+            start = today.replace(month=1, day=1)
+            end = today.replace(month=12, day=31)
+        else:
+            start = None
+            end = None
+        
+        if start and end:
+            query = query.filter(
+                Budget.start_date <= end,
+                Budget.end_date >= start
+            )
     
     budgets = query.all()
     
-    # Розширюємо інформацію про бюджети, додаючи поточний стан витрат
+    # Розширюємо інформацію про бюджети
     result = []
     for budget in budgets:
         budget_dict = budget.to_dict()
         
-        # Знаходимо суму витрат по цій категорії в рамках періоду бюджету
+        # Знаходимо суму витрат по категорії в рамках періоду бюджету
         spent_query = Transaction.query.filter_by(
             user_id=user_id,
             category_id=budget.category_id,
-            type='expense'
+            transaction_type='expense'
         ).filter(
             Transaction.date >= budget.start_date,
             Transaction.date <= budget.end_date
@@ -55,12 +75,8 @@ def create_budget():
     data = request.get_json()
     
     # Перевірка наявності необхідних полів
-    if not all(k in data for k in ('category_id', 'amount', 'period', 'start_date', 'end_date')):
-        return jsonify({'error': 'Missing required fields'}), 400
-    
-    # Перевірка періоду
-    if data['period'] not in ['week', 'month', 'year']:
-        return jsonify({'error': 'Period must be "week", "month", or "year"'}), 400
+    if not all(k in data for k in ('category_id', 'amount', 'start_date', 'end_date')):
+        return jsonify({'error': 'Missing required fields: category_id, amount, start_date, end_date'}), 400
     
     # Перевірка категорії
     category = Category.query.filter_by(id=data['category_id'], user_id=user_id).first()
@@ -71,7 +87,7 @@ def create_budget():
     if category.type != 'expense':
         return jsonify({'error': 'Budget can only be created for expense categories'}), 400
     
-    # Перетворення дат з рядків у об'єкти Date
+    # Перетворення дат
     try:
         start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
         end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
@@ -87,7 +103,6 @@ def create_budget():
         user_id=user_id,
         category_id=data['category_id'],
         amount=data['amount'],
-        period=data['period'],
         start_date=start_date,
         end_date=end_date
     )
@@ -99,7 +114,7 @@ def create_budget():
     spent_query = Transaction.query.filter_by(
         user_id=user_id,
         category_id=new_budget.category_id,
-        type='expense'
+        transaction_type='expense'
     ).filter(
         Transaction.date >= new_budget.start_date,
         Transaction.date <= new_budget.end_date
@@ -123,7 +138,6 @@ def update_budget(budget_id):
     user_id = get_jwt_identity()
     data = request.get_json()
     
-    # Пошук бюджету
     budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first()
     
     if not budget:
@@ -132,11 +146,6 @@ def update_budget(budget_id):
     # Оновлення полів
     if 'amount' in data:
         budget.amount = data['amount']
-    
-    if 'period' in data:
-        if data['period'] not in ['week', 'month', 'year']:
-            return jsonify({'error': 'Period must be "week", "month", or "year"'}), 400
-        budget.period = data['period']
     
     if 'start_date' in data:
         try:
@@ -160,7 +169,7 @@ def update_budget(budget_id):
     spent_query = Transaction.query.filter_by(
         user_id=user_id,
         category_id=budget.category_id,
-        type='expense'
+        transaction_type='expense'
     ).filter(
         Transaction.date >= budget.start_date,
         Transaction.date <= budget.end_date
@@ -183,7 +192,6 @@ def update_budget(budget_id):
 def delete_budget(budget_id):
     user_id = get_jwt_identity()
     
-    # Пошук бюджету
     budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first()
     
     if not budget:
