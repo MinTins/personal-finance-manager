@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getTransactionsSummary } from '../../services/transactions'
+import { getAccounts } from '../../services/accounts'
 import { getExchangeRates } from '../../services/exchangeRates'
 import { formatCurrency, generateChartColors } from '../../utils/helpers'
 import { Pie, Bar } from 'react-chartjs-2'
@@ -11,21 +12,27 @@ Chart.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 const Dashboard = () => {
   const [summary, setSummary] = useState(null)
+  const [accounts, setAccounts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [exchangeRates, setExchangeRates] = useState(null)
   const [dateRange, setDateRange] = useState({
-    start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // Початок поточного місяця
-    end_date: new Date().toISOString().split('T')[0] // Поточна дата
+    start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0]
   })
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
+        
         // Отримуємо статистику по транзакціях
         const summaryData = await getTransactionsSummary(dateRange)
         setSummary(summaryData)
+        
+        // Отримуємо рахунки
+        const accountsData = await getAccounts()
+        setAccounts(accountsData)
         
         // Отримуємо курси валют
         const rates = await getExchangeRates('UAH', 'USD,EUR,GBP')
@@ -39,6 +46,20 @@ const Dashboard = () => {
 
     fetchData()
   }, [dateRange])
+
+  const getCurrencySymbol = (currency) => {
+    const symbols = {
+      'UAH': '₴',
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£'
+    }
+    return symbols[currency] || currency
+  }
+
+  const getTotalBalance = () => {
+    return accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0)
+  }
 
   // Підготовка даних для графіку категорій витрат
   const prepareExpenseCategoriesChart = () => {
@@ -145,6 +166,79 @@ const Dashboard = () => {
           />
         </div>
       </div>
+
+      {/* Рахунки */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Мої рахунки</h2>
+          <Link to="/accounts" className="text-primary-600 hover:text-primary-800 text-sm font-medium">
+            Управління рахунками →
+          </Link>
+        </div>
+
+        {accounts.length === 0 ? (
+          <div className="card p-6 text-center border-2 border-dashed">
+            <div className="text-4xl mb-2">💳</div>
+            <p className="text-gray-600 mb-3">У вас немає рахунків</p>
+            <Link to="/accounts" className="btn btn-primary">
+              Створити перший рахунок
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Загальний баланс */}
+            <div className="card bg-gradient-to-r from-primary-500 to-primary-600 text-white mb-4">
+              <h3 className="text-lg font-semibold mb-1">Загальний баланс</h3>
+              <p className="text-3xl font-bold">
+                {getTotalBalance().toFixed(2)} ₴
+              </p>
+              <p className="text-sm opacity-90 mt-1">
+                По всіх {accounts.length} рахунках
+              </p>
+            </div>
+
+            {/* Картки рахунків */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {accounts.slice(0, 6).map((account) => (
+                <Link
+                  key={account.id}
+                  to="/accounts"
+                  className="card hover:shadow-lg transition-all group"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
+                        {account.name}
+                      </h3>
+                      <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${
+                        account.is_active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {account.is_active ? 'Активний' : 'Неактивний'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="border-t pt-3">
+                    <p className="text-2xl font-bold text-primary-600">
+                      {parseFloat(account.balance).toFixed(2)} {getCurrencySymbol(account.currency)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Баланс</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {accounts.length > 6 && (
+              <div className="text-center mt-4">
+                <Link to="/accounts" className="text-primary-600 hover:text-primary-800 text-sm font-medium">
+                  Показати всі рахунки ({accounts.length}) →
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+      </div>
       
       {/* Загальна статистика */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -209,7 +303,7 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-primary-800">Управління транзакціями</h2>
             <p className="text-primary-600">Переглядайте та редагуйте ваші доходи й витрати</p>
           </div>
-          <span className="text-primary-500">→</span>
+          <span className="text-primary-500 text-2xl">→</span>
         </Link>
         
         <Link to="/budgets" className="card bg-primary-50 hover:bg-primary-100 transition-colors flex items-center justify-between p-6">
@@ -217,7 +311,7 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-primary-800">Бюджети</h2>
             <p className="text-primary-600">Встановлюйте ліміти витрат та відстежуйте їх виконання</p>
           </div>
-          <span className="text-primary-500">→</span>
+          <span className="text-primary-500 text-2xl">→</span>
         </Link>
       </div>
     </div>

@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard/Dashboard'
 import TransactionList from './components/Transactions/TransactionList'
 import BudgetList from './components/Budgets/BudgetList'
 import CategoryList from './components/Categories/CategoryList'
+import AccountList from './components/Accounts/AccountList'
 import Navbar from './components/common/Navbar'
 import Sidebar from './components/common/Sidebar'
 
@@ -33,12 +34,10 @@ function App() {
     checkAuth()
   }, [])
 
-  // Функція для встановлення користувача після авторизації
   const handleLogin = (userData) => {
     setUser(userData)
   }
 
-  // Функція для виходу
   const handleLogout = () => {
     localStorage.removeItem('token')
     setUser(null)
@@ -62,9 +61,10 @@ function App() {
             <main className="flex-1 overflow-y-auto p-4">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/accounts" element={<AccountList />} />
                 <Route path="/transactions" element={<TransactionList />} />
-                <Route path="/budgets" element={<BudgetList />} />
                 <Route path="/categories" element={<CategoryList />} />
+                <Route path="/budgets" element={<BudgetList />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

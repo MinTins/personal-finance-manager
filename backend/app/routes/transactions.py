@@ -54,7 +54,7 @@ def get_transactions():
 @transactions_bp.route('', methods=['POST'])
 @jwt_required()
 def create_transaction():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json()
     
     # Перевірка наявності необхідних полів
@@ -100,9 +100,9 @@ def create_transaction():
     
     # Оновлення балансу рахунку
     if data['transaction_type'] == 'income':
-        account.balance += data['amount']
+        account.balance += float(data['amount'])
     elif data['transaction_type'] == 'expense':
-        account.balance -= data['amount']
+        account.balance -= float(data['amount'])
     
     db.session.commit()
     
@@ -114,7 +114,7 @@ def create_transaction():
 @transactions_bp.route('/<int:transaction_id>', methods=['GET'])
 @jwt_required()
 def get_transaction(transaction_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     transaction = Transaction.query.filter_by(id=transaction_id, user_id=user_id).first()
     
@@ -128,7 +128,7 @@ def get_transaction(transaction_id):
 @transactions_bp.route('/<int:transaction_id>', methods=['PUT'])
 @jwt_required()
 def update_transaction(transaction_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json()
     
     transaction = Transaction.query.filter_by(id=transaction_id, user_id=user_id).first()
@@ -173,7 +173,7 @@ def update_transaction(transaction_id):
         
         # Застосування нової транзакції
         new_type = data.get('transaction_type', old_type)
-        new_amount = data.get('amount', old_amount)
+        new_amount = float(data.get('amount', old_amount))
         
         if new_type == 'income':
             account.balance += new_amount
@@ -193,7 +193,7 @@ def update_transaction(transaction_id):
 @transactions_bp.route('/<int:transaction_id>', methods=['DELETE'])
 @jwt_required()
 def delete_transaction(transaction_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     transaction = Transaction.query.filter_by(id=transaction_id, user_id=user_id).first()
     
@@ -218,7 +218,7 @@ def delete_transaction(transaction_id):
 @transactions_bp.route('/summary', methods=['GET'])
 @jwt_required()
 def get_summary():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     
     # Отримання параметрів фільтрації
     start_date = request.args.get('start_date')
@@ -246,11 +246,36 @@ def get_summary():
     total_expense = sum(float(t.amount) for t in transactions if t.transaction_type == 'expense')
     balance = total_income - total_expense
     
+    # Групування за категоріями
+    categories_summary = {}
+    for transaction in transactions:
+        category_name = transaction.category.name if transaction.category else 'Без категорії'
+        category_id = transaction.category_id if transaction.category else 0
+        category_color = transaction.category.color if transaction.category else '#808080'
+        
+        if transaction.transaction_type not in categories_summary:
+            categories_summary[transaction.transaction_type] = {}
+            
+        if category_id not in categories_summary[transaction.transaction_type]:
+            categories_summary[transaction.transaction_type][category_id] = {
+                'id': category_id,
+                'name': category_name,
+                'color': category_color,
+                'amount': 0
+            }
+            
+        categories_summary[transaction.transaction_type][category_id]['amount'] += float(transaction.amount)
+    
+    # Перетворення словників у списки
+    income_categories = list(categories_summary.get('income', {}).values())
+    expense_categories = list(categories_summary.get('expense', {}).values())
+    
     return jsonify({
         'summary': {
             'total_income': total_income,
             'total_expense': total_expense,
             'balance': balance,
-            'transaction_count': len(transactions)
+            'income_categories': income_categories,
+            'expense_categories': expense_categories
         }
     }), 200

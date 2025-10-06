@@ -2,7 +2,9 @@ import { NavLink } from 'react-router-dom'
 import { 
   FiHome, 
   FiDollarSign, 
-  FiPieChart, 
+  FiPieChart,
+  FiFolder,
+  FiCreditCard,
   FiSettings 
 } from 'react-icons/fi'
 
@@ -23,6 +25,15 @@ const Sidebar = () => {
           <FiHome className="mr-3 h-5 w-5" />
           Головна
         </NavLink>
+        
+        <NavLink 
+          to="/accounts" 
+          className={({ isActive }) => isActive ? activeClass : inactiveClass}
+        >
+          <FiCreditCard className="mr-3 h-5 w-5" />
+          Рахунки
+        </NavLink>
+        
         <NavLink 
           to="/transactions" 
           className={({ isActive }) => isActive ? activeClass : inactiveClass}
@@ -30,6 +41,15 @@ const Sidebar = () => {
           <FiDollarSign className="mr-3 h-5 w-5" />
           Транзакції
         </NavLink>
+        
+        <NavLink 
+          to="/categories" 
+          className={({ isActive }) => isActive ? activeClass : inactiveClass}
+        >
+          <FiFolder className="mr-3 h-5 w-5" />
+          Категорії
+        </NavLink>
+        
         <NavLink 
           to="/budgets" 
           className={({ isActive }) => isActive ? activeClass : inactiveClass}
