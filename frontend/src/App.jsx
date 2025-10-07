@@ -11,6 +11,11 @@ import AccountList from './components/Accounts/AccountList'
 import Navbar from './components/common/Navbar'
 import Sidebar from './components/common/Sidebar'
 
+// Імпорт компонентів адміністратора
+import AdminDashboard from './components/Admin/AdminDashboard'
+import UserManagement from './components/Admin/UserManagement'
+import AdminLogs from './components/Admin/AdminLogs'
+
 function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -57,14 +62,25 @@ function App() {
         <div className="flex flex-col h-screen">
           <Navbar user={user} onLogout={handleLogout} />
           <div className="flex flex-1 overflow-hidden">
-            <Sidebar />
+            <Sidebar user={user} />
             <main className="flex-1 overflow-y-auto p-4">
               <Routes>
+                {/* Маршрути для звичайних користувачів */}
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/accounts" element={<AccountList />} />
                 <Route path="/transactions" element={<TransactionList />} />
                 <Route path="/categories" element={<CategoryList />} />
                 <Route path="/budgets" element={<BudgetList />} />
+                
+                {/* Маршрути для адміністраторів */}
+                {user.role === 'admin' && (
+                  <>
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/users" element={<UserManagement />} />
+                    <Route path="/admin/logs" element={<AdminLogs />} />
+                  </>
+                )}
+                
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

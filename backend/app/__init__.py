@@ -38,6 +38,7 @@ def create_app():
         from app.routes.budgets import budgets_bp
         from app.routes.accounts import accounts_bp
         from app.routes.exchange_rates import exchange_rates_bp
+        from app.routes.admin import admin_bp
         
         app.register_blueprint(auth_bp, url_prefix='/api/auth')
         app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
@@ -45,6 +46,7 @@ def create_app():
         app.register_blueprint(budgets_bp, url_prefix='/api/budgets')
         app.register_blueprint(accounts_bp, url_prefix='/api/accounts')
         app.register_blueprint(exchange_rates_bp, url_prefix='/api/exchange-rates')
+        app.register_blueprint(admin_bp, url_prefix='/api/admin')
         
         # Створення таблиць БД, якщо вони не існують
         db.create_all()
