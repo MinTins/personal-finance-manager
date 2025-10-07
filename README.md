@@ -9,7 +9,7 @@
 ## Application Screenshots
 
 ### Dashboard
-![Dashboard Screenshot](https://i.ibb.co/6005Zkt5/2025-10-07-093842452.png)
+![Dashboard Screenshot](https://i.ibb.co/b5t9yh7N/2025-10-07-095200762.png)
 *Main dashboard with financial overview, charts, and exchange rates*
 
 ### Transactions Management
