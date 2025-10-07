@@ -3,7 +3,12 @@ import api from './api'
 // Отримання списку бюджетів
 export const getBudgets = async (period = null) => {
   try {
-    const params = period ? { period } : {}
+    // Якщо period порожній або null, не передаємо його в params
+    const params = {}
+    if (period && period !== '') {
+      params.period = period
+    }
+    
     const response = await api.get('/budgets', { params })
     return response.data.budgets
   } catch (error) {

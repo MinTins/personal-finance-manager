@@ -9,13 +9,14 @@ const BudgetList = () => {
   const [error, setError] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingBudget, setEditingBudget] = useState(null)
-  const [period, setPeriod] = useState('month') // Фільтр за періодом
+  const [period, setPeriod] = useState('') // За замовчуванням показуємо всі бюджети
 
   // Завантаження бюджетів
   useEffect(() => {
     const fetchBudgets = async () => {
       try {
         setLoading(true)
+        setError('') // Очищуємо помилки
         const budgetsData = await getBudgets(period)
         setBudgets(budgetsData)
       } catch (err) {
@@ -83,14 +84,9 @@ const BudgetList = () => {
     setEditingBudget(null)
   }
 
-  // Отримання тексту для відображення періоду
-  const getPeriodText = (period) => {
-    switch (period) {
-      case 'week': return 'Тиждень'
-      case 'month': return 'Місяць'
-      case 'year': return 'Рік'
-      default: return period
-    }
+  // Функція для зміни фільтра періоду
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod)
   }
 
   if (loading && budgets.length === 0) {
@@ -135,29 +131,29 @@ const BudgetList = () => {
       )}
       
       {/* Фільтр за періодом */}
-      <div className="card mb-6">
+      <div className="card">
         <h2 className="text-lg font-semibold mb-4">Фільтр за періодом</h2>
-        <div className="flex space-x-4">
+        <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setPeriod('week')}
+            onClick={() => handlePeriodChange('week')}
             className={`btn ${period === 'week' ? 'btn-primary' : 'btn-secondary'}`}
           >
             Тиждень
           </button>
           <button
-            onClick={() => setPeriod('month')}
+            onClick={() => handlePeriodChange('month')}
             className={`btn ${period === 'month' ? 'btn-primary' : 'btn-secondary'}`}
           >
             Місяць
           </button>
           <button
-            onClick={() => setPeriod('year')}
+            onClick={() => handlePeriodChange('year')}
             className={`btn ${period === 'year' ? 'btn-primary' : 'btn-secondary'}`}
           >
             Рік
           </button>
           <button
-            onClick={() => setPeriod('')}
+            onClick={() => handlePeriodChange('')}
             className={`btn ${period === '' ? 'btn-primary' : 'btn-secondary'}`}
           >
             Усі
@@ -165,10 +161,19 @@ const BudgetList = () => {
         </div>
       </div>
 
-      {/* Список бюджетів */}
-      {budgets.length === 0 ? (
+      {/* Індикатор завантаження під час фільтрації */}
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      ) : budgets.length === 0 ? (
         <div className="card p-6 text-center">
-          <p className="text-gray-500">Бюджети не знайдено. Створіть новий бюджет, натиснувши кнопку вгорі.</p>
+          <p className="text-gray-500">
+            {period === '' 
+              ? 'Бюджети не знайдено. Створіть новий бюджет, натиснувши кнопку вгорі.' 
+              : `Немає бюджетів для обраного періоду. Спробуйте інший період або створіть новий бюджет.`
+            }
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,57 +183,59 @@ const BudgetList = () => {
             
             return (
               <div key={budget.id} className="card">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold">{budget.category_name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {getPeriodText(budget.period)}: {formatDate(budget.start_date)} - {formatDate(budget.end_date)}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {budget.category_name || 'Без категорії'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {formatDate(budget.start_date)} - {formatDate(budget.end_date)}
                     </p>
                   </div>
-                  <div 
-                    className="h-6 w-6 rounded-full" 
-                    style={{ backgroundColor: budget.category_color || '#808080' }}
-                  ></div>
                 </div>
                 
-                <div className="mt-4">
-                  <div className="flex justify-between items-center mb-1">
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-700">
-                      {formatCurrency(budget.spent)} з {formatCurrency(budget.amount)}
+                      Витрачено
                     </span>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                    </span>
+                  </div>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div 
+                      className={`${progressColor} h-3 rounded-full transition-all duration-300`} 
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-2">
+                    <span className={`text-sm font-medium ${
+                      budget.remaining >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {budget.remaining >= 0 ? 'Залишилося' : 'Перевитрата'}: {formatCurrency(Math.abs(budget.remaining))}
+                    </span>
+                    <span className="text-sm font-medium text-gray-600">
                       {Math.round(progress)}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      className={`${progressColor} h-2.5 rounded-full`} 
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
                 </div>
                 
-                <div className="mt-6 flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      Залишилося: <span className="font-semibold">{formatCurrency(budget.remaining)}</span>
-                    </p>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => openEditForm(budget)}
-                      className="text-primary-600 hover:text-primary-800"
-                    >
-                      Редагувати
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBudget(budget.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Видалити
-                    </button>
-                  </div>
+                <div className="flex justify-end space-x-3 pt-3 border-t">
+                  <button
+                    onClick={() => openEditForm(budget)}
+                    className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                  >
+                    Редагувати
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBudget(budget.id)}
+                    className="text-sm text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Видалити
+                  </button>
                 </div>
               </div>
             )
