@@ -6,6 +6,22 @@
 
 ---
 
+## Application Screenshots
+
+### Dashboard
+![Dashboard Screenshot](https://i.ibb.co/6005Zkt5/2025-10-07-093842452.png)
+*Main dashboard with financial overview, charts, and exchange rates*
+
+### Transactions Management
+![Transactions Screenshot](https://i.ibb.co/qLMWzR18/2025-10-07-093924429.png)
+*Transaction list with filtering and CRUD operations*
+
+### Budget Tracking
+![Budget Screenshot](https://i.ibb.co/Gvc09Vnp/2025-10-07-094017018.png)
+*Budget management and spending tracking*
+
+---
+
 ## Project Description
 
 Personal Finance Manager is a full-stack web application for managing personal finances with the ability to track income, expenses, create budgets, and visualize financial activity.
