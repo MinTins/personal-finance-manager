@@ -177,40 +177,28 @@ const Dashboard = () => {
         </div>
 
         {accounts.length === 0 ? (
-          <div className="card p-6 text-center border-2 border-dashed">
-            <div className="text-4xl mb-2">💳</div>
-            <p className="text-gray-600 mb-3">У вас немає рахунків</p>
+          <div className="card text-center py-8">
+            <p className="text-gray-500 mb-4">У вас поки немає рахунків</p>
             <Link to="/accounts" className="btn btn-primary">
               Створити перший рахунок
             </Link>
           </div>
         ) : (
           <>
-            {/* Загальний баланс */}
-            <div className="card bg-gradient-to-r from-primary-500 to-primary-600 text-white mb-4">
-              <h3 className="text-lg font-semibold mb-1">Загальний баланс</h3>
-              <p className="text-3xl font-bold">
-                {getTotalBalance().toFixed(2)} ₴
-              </p>
-              <p className="text-sm opacity-90 mt-1">
-                По всіх {accounts.length} рахунках
-              </p>
-            </div>
-
-            {/* Картки рахунків */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {accounts.slice(0, 6).map((account) => (
+              {accounts.slice(0, 6).map(account => (
                 <Link
                   key={account.id}
                   to="/accounts"
-                  className="card hover:shadow-lg transition-all group"
+                  className="card hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex justify-between items-start mb-3">
+                  <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
-                        {account.name}
-                      </h3>
-                      <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${
+                      <h3 className="font-semibold text-gray-800">{account.name}</h3>
+                      <p className="text-sm text-gray-500">{account.currency}</p>
+                    </div>
+                    <div>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
                         account.is_active 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-gray-100 text-gray-800'
@@ -281,17 +269,21 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Курси валют */}
+      {/* Курси валют - ВИПРАВЛЕНО: показуємо 1 EUR = X UAH */}
       {exchangeRates && (
         <div className="card">
           <h2 className="text-lg font-semibold mb-4">Курси валют</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Object.entries(exchangeRates.rates).map(([currency, rate]) => (
-              <div key={currency} className="p-4 border rounded-lg bg-gray-50">
-                <p className="text-xl font-bold">{currency}</p>
-                <p className="text-gray-600">1 {exchangeRates.base_currency} = {rate.toFixed(2)} {currency}</p>
-              </div>
-            ))}
+            {Object.entries(exchangeRates.rates).map(([currency, rate]) => {
+              // Інвертуємо курс: якщо 1 UAH = 0.025 EUR, то 1 EUR = 40 UAH
+              const invertedRate = 1 / rate
+              return (
+                <div key={currency} className="p-4 border rounded-lg bg-gray-50">
+                  <p className="text-xl font-bold">{currency}</p>
+                  <p className="text-gray-600">1 {currency} = {invertedRate.toFixed(2)} {exchangeRates.base_currency}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
