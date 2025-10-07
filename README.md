@@ -28,7 +28,7 @@ Personal Finance Manager is a full-stack web application for managing personal f
 
 ### Laboratory Work Progress:
 
-✅ **Lab #1** - Backend Development (Flask, MySQL, REST API) - **COMPLETED**  
+✅ **Lab #1** - Backend Development (Flask, MySQL, REST API, Admin Panel) - **COMPLETED**  
 ✅ **Lab #2** - Frontend Development (React, Dynamic Interface) - **COMPLETED**  
 ✅ **Lab #3** - Web API (REST endpoints, JWT Authentication) - **COMPLETED**  
 ⏳ **Lab #4** - Deployment and Performance  
@@ -74,7 +74,7 @@ The application uses a relational MySQL database with the following entities:
 - **budgets** - Budget planning by categories
 
 ### Database EER Diagram:
-![Database EER Diagram](https://i.ibb.co/WvNHchw5/2025-10-07-092553059.png)
+![Database EER Diagram](https://i.ibb.co/S4M5KqHg/2025-10-07-103105084.png)
 
 ---
 
