@@ -2,11 +2,12 @@
 -- MySQL 8.0+
 -- 
 -- This schema supports multi-user personal finance management with:
--- - User authentication
+-- - User authentication with role-based access (user, admin)
 -- - Multiple accounts per user (with multi-currency support)
 -- - Transaction tracking (income, expenses, transfers)
 -- - Budget management
 -- - Custom categories with visual coding
+-- - Admin panel with user management and activity logging
 
 CREATE DATABASE IF NOT EXISTS `personal_finance_manager` 
   DEFAULT CHARACTER SET utf8mb4 
@@ -16,7 +17,7 @@ USE `personal_finance_manager`;
 
 -- ============================================================================
 -- TABLE: users
--- Stores user authentication and profile information
+-- Stores user authentication and profile information with role support
 -- ============================================================================
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
@@ -24,12 +25,14 @@ CREATE TABLE `users` (
   `username` VARCHAR(50) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
+  `role` ENUM('user', 'admin') DEFAULT 'user' NOT NULL,
   `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
-  INDEX `idx_email` (`email`)
+  INDEX `idx_email` (`email`),
+  INDEX `idx_role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ============================================================================
@@ -140,12 +143,114 @@ CREATE TABLE `budgets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ============================================================================
+-- TABLE: admin_logs
+-- Stores admin activity logs for audit purposes
+-- ============================================================================
+DROP TABLE IF EXISTS `admin_logs`;
+CREATE TABLE `admin_logs` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `admin_id` INT NOT NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `target_type` VARCHAR(50),
+  `target_id` INT,
+  `details` TEXT,
+  `ip_address` VARCHAR(45),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_admin_id` (`admin_id`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_action` (`action`),
+  CONSTRAINT `fk_admin_logs_user` 
+    FOREIGN KEY (`admin_id`) 
+    REFERENCES `users` (`id`) 
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ============================================================================
+-- VIEW: user_statistics
+-- Provides comprehensive statistics for each user
+-- ============================================================================
+CREATE OR REPLACE VIEW `user_statistics` AS
+SELECT 
+  u.id,
+  u.username,
+  u.email,
+  u.role,
+  u.created_at,
+  COUNT(DISTINCT a.id) as accounts_count,
+  COUNT(DISTINCT t.id) as transactions_count,
+  COUNT(DISTINCT c.id) as categories_count,
+  COUNT(DISTINCT b.id) as budgets_count,
+  COALESCE(SUM(CASE WHEN t.transaction_type = 'income' THEN t.amount ELSE 0 END), 0) as total_income,
+  COALESCE(SUM(CASE WHEN t.transaction_type = 'expense' THEN t.amount ELSE 0 END), 0) as total_expenses,
+  MAX(t.date) as last_transaction_date
+FROM users u
+LEFT JOIN accounts a ON u.id = a.user_id
+LEFT JOIN transactions t ON u.id = t.user_id
+LEFT JOIN categories c ON u.id = c.user_id AND c.user_id IS NOT NULL
+LEFT JOIN budgets b ON u.id = b.user_id
+GROUP BY u.id, u.username, u.email, u.role, u.created_at;
+
+-- ============================================================================
+-- STORED PROCEDURE: get_system_statistics
+-- Returns overall system statistics for admin dashboard
+-- ============================================================================
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS `get_system_statistics`//
+
+CREATE PROCEDURE `get_system_statistics`()
+BEGIN
+  SELECT 
+    (SELECT COUNT(*) FROM users WHERE role = 'user') as total_users,
+    (SELECT COUNT(*) FROM users WHERE role = 'admin') as total_admins,
+    (SELECT COUNT(*) FROM accounts) as total_accounts,
+    (SELECT COUNT(*) FROM transactions) as total_transactions,
+    (SELECT COUNT(*) FROM categories WHERE user_id IS NOT NULL) as total_custom_categories,
+    (SELECT COUNT(*) FROM budgets) as total_budgets,
+    (SELECT COALESCE(SUM(balance), 0) FROM accounts) as total_balance,
+    (SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURDATE()) as new_users_today,
+    (SELECT COUNT(*) FROM transactions WHERE DATE(date) = CURDATE()) as transactions_today;
+END//
+
+DELIMITER ;
+
+-- ============================================================================
+-- TRIGGER: log_user_deletion
+-- Automatically logs user deletions for audit trail
+-- ============================================================================
+DELIMITER //
+
+DROP TRIGGER IF EXISTS `log_user_deletion`//
+
+CREATE TRIGGER `log_user_deletion` 
+BEFORE DELETE ON `users`
+FOR EACH ROW
+BEGIN
+  INSERT INTO `admin_logs` (`admin_id`, `action`, `target_type`, `target_id`, `details`, `created_at`)
+  VALUES (
+    COALESCE(@current_admin_id, OLD.id), 
+    'USER_DELETED', 
+    'user', 
+    OLD.id, 
+    CONCAT('User "', OLD.username, '" (', OLD.email, ') was deleted'),
+    NOW()
+  );
+END//
+
+DELIMITER ;
+
+-- ============================================================================
 -- TEST DATA
 -- ============================================================================
 
--- Insert test user
-INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `created_at`, `updated_at`) 
-VALUES (1, 'testuser', 'test@example.com', '$2b$12$6pvRYDvc.wudK6h7XgoseujtpndyUisqg7AITTFiIviG1zXf3NnOm', '2025-10-06 13:20:59', '2025-10-06 13:23:40');
+-- Insert test users (1 regular user, 1 admin)
+INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `role`, `created_at`, `updated_at`) VALUES
+(1, 'testuser', 'test@example.com', '$2b$12$6pvRYDvc.wudK6h7XgoseujtpndyUisqg7AITTFiIviG1zXf3NnOm', 'user', '2025-10-06 13:20:59', '2025-10-06 13:23:40'),
+(2, 'admin', 'admin@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/lewKVEwP0CRCkb6dS', 'admin', '2025-10-07 10:00:00', '2025-10-07 10:00:00');
+
+-- Password for testuser: password123
+-- Password for admin: admin123
 
 -- Insert test accounts
 INSERT INTO `accounts` (`id`, `user_id`, `name`, `balance`, `currency`, `is_active`, `created_at`) VALUES
@@ -226,6 +331,22 @@ INSERT INTO `budgets` (`id`, `user_id`, `category_id`, `amount`, `start_date`, `
 (3, 1, 8, 2000.00, '2025-10-01', '2025-10-31', '2025-10-06 13:20:59'),
 (4, 1, 12, 8000.00, '2025-10-01', '2025-10-31', '2025-10-06 13:20:59'),
 (5, 1, 13, 2000.00, '2025-10-01', '2025-10-31', '2025-10-06 13:20:59');
+
+-- ============================================================================
+-- VERIFICATION QUERIES
+-- ============================================================================
+
+-- View all users and their roles
+-- SELECT id, username, email, role, created_at FROM users;
+
+-- View user statistics
+-- SELECT * FROM user_statistics;
+
+-- Get system statistics
+-- CALL get_system_statistics();
+
+-- View admin logs
+-- SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT 10;
 
 -- ============================================================================
 -- USEFUL QUERIES (Examples)
