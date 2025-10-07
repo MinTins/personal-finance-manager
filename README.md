@@ -59,7 +59,6 @@ The application uses a relational MySQL database with the following entities:
 
 ### Database EER Diagram:
 ![Database EER Diagram](https://i.ibb.co/WvNHchw5/2025-10-07-092553059.png)
-*Note: Add your actual Imgur link here*
 
 ---
 
