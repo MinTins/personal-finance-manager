@@ -18,7 +18,8 @@ USE `personal_finance_manager`;
 -- TABLE: users
 -- Stores user authentication and profile information
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS `users` (
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(50) NOT NULL,
   `email` VARCHAR(100) NOT NULL,
@@ -35,7 +36,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- TABLE: accounts
 -- Stores user financial accounts (bank cards, cash, etc.)
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS `accounts` (
+DROP TABLE IF EXISTS `accounts`;
+CREATE TABLE `accounts` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `name` VARCHAR(50) NOT NULL,
@@ -56,7 +58,8 @@ CREATE TABLE IF NOT EXISTS `accounts` (
 -- TABLE: categories
 -- Stores transaction categories (income/expense) with color coding
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS `categories` (
+DROP TABLE IF EXISTS `categories`;
+CREATE TABLE `categories` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT DEFAULT NULL,
   `name` VARCHAR(50) NOT NULL,
@@ -76,7 +79,8 @@ CREATE TABLE IF NOT EXISTS `categories` (
 -- TABLE: transactions
 -- Stores all financial transactions (income, expenses, transfers)
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS `transactions` (
+DROP TABLE IF EXISTS `transactions`;
+CREATE TABLE `transactions` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `account_id` INT NOT NULL,
@@ -111,7 +115,8 @@ CREATE TABLE IF NOT EXISTS `transactions` (
 -- TABLE: budgets
 -- Stores budget limits for categories over specific time periods
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS `budgets` (
+DROP TABLE IF EXISTS `budgets`;
+CREATE TABLE `budgets` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `category_id` INT DEFAULT NULL,
@@ -135,73 +140,58 @@ CREATE TABLE IF NOT EXISTS `budgets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ============================================================================
--- SAMPLE DATA (Optional - for testing/development)
--- Uncomment to insert sample data
+-- TEST DATA
 -- ============================================================================
 
--- Sample User
--- INSERT INTO `users` (`username`, `email`, `password_hash`) 
--- VALUES ('demo_user', 'demo@example.com', '$2b$12$SAMPLE_HASH_HERE');
+-- Insert test user
+INSERT INTO `users` (`id`, `username`, `email`, `password_hash`, `created_at`, `updated_at`) 
+VALUES (1, 'testuser', 'test@example.com', '$2b$12$6pvRYDvc.wudK6h7XgoseujtpndyUisqg7AITTFiIviG1zXf3NnOm', '2025-10-06 13:20:59', '2025-10-06 13:23:40');
 
--- Sample Income Categories
--- INSERT INTO `categories` (`user_id`, `name`, `type`, `color`) VALUES
--- (1, 'Зарплата', 'income', '#10B981'),
--- (1, 'Фріланс', 'income', '#3B82F6'),
--- (1, 'Подарунки', 'income', '#EC4899'),
--- (1, 'Інвестиції', 'income', '#6366F1'),
--- (1, 'Продаж', 'income', '#10B981');
+-- Insert test accounts
+INSERT INTO `accounts` (`id`, `user_id`, `name`, `balance`, `currency`, `is_active`, `created_at`) VALUES
+(1, 1, 'Готівка', 5000.00, 'UAH', 1, '2025-10-06 13:20:59'),
+(2, 1, 'Картка ПриватБанк', 15000.00, 'UAH', 1, '2025-10-06 13:20:59'),
+(3, 1, 'Картка Монобанк', 8000.00, 'UAH', 1, '2025-10-06 13:20:59'),
+(4, 1, 'Долари готівка', 1000.00, 'USD', 1, '2025-10-06 13:20:59'),
+(5, 1, 'Євро готівка', 500.00, 'EUR', 1, '2025-10-06 13:20:59');
 
--- Sample Expense Categories
--- INSERT INTO `categories` (`user_id`, `name`, `type`, `color`) VALUES
--- (1, 'Харчування', 'expense', '#F59E0B'),
--- (1, 'Транспорт', 'expense', '#EF4444'),
--- (1, 'Розваги', 'expense', '#8B5CF6'),
--- (1, 'Подорожі', 'expense', '#14B8A6'),
--- (1, 'Здоров''я', 'expense', '#059669'),
--- (1, 'Освіта', 'expense', '#84CC16'),
--- (1, 'Оренда', 'expense', '#F97316'),
--- (1, 'Комунальні послуги', 'expense', '#6B7280'),
--- (1, 'Одяг', 'expense', '#D97706'),
--- (1, 'Електроніка', 'expense', '#06B6D4');
+-- Insert test categories
+INSERT INTO `categories` (`id`, `user_id`, `name`, `type`, `created_at`, `color`) VALUES
+-- Income categories
+(1, 1, 'Зарплата', 'income', '2025-10-06 13:20:59', '#10B981'),
+(2, 1, 'Фріланс', 'income', '2025-10-06 13:20:59', '#3B82F6'),
+(3, 1, 'Подарунки', 'income', '2025-10-06 13:20:59', '#EC4899'),
+(4, 1, 'Інвестиції', 'income', '2025-10-06 13:20:59', '#6366F1'),
+(5, 1, 'Продаж', 'income', '2025-10-06 13:20:59', '#10B981'),
+-- Expense categories
+(6, 1, 'Харчування', 'expense', '2025-10-06 13:20:59', '#F59E0B'),
+(7, 1, 'Транспорт', 'expense', '2025-10-06 13:20:59', '#EF4444'),
+(8, 1, 'Розваги', 'expense', '2025-10-06 13:20:59', '#8B5CF6'),
+(9, 1, 'Подорожі', 'expense', '2025-10-06 13:20:59', '#14B8A6'),
+(10, 1, 'Здоров\'я', 'expense', '2025-10-06 13:20:59', '#059669'),
+(11, 1, 'Освіта', 'expense', '2025-10-06 13:20:59', '#84CC16'),
+(12, 1, 'Оренда', 'expense', '2025-10-06 13:20:59', '#F97316'),
+(13, 1, 'Комунальні послуги', 'expense', '2025-10-06 13:20:59', '#6B7280'),
+(14, 1, 'Одяг', 'expense', '2025-10-06 13:20:59', '#D97706'),
+(15, 1, 'Електроніка', 'expense', '2025-10-06 13:20:59', '#06B6D4');
 
--- ============================================================================
--- USEFUL QUERIES (Examples)
--- ============================================================================
-
--- Get user's total balance across all active accounts
--- SELECT 
---   u.username,
---   SUM(a.balance) as total_balance,
---   a.currency
--- FROM users u
--- JOIN accounts a ON u.id = a.user_id
--- WHERE a.is_active = 1
--- GROUP BY u.id, a.currency;
-
--- Get monthly expense summary by category
--- SELECT 
---   c.name as category,
---   SUM(t.amount) as total_spent,
---   COUNT(t.id) as transaction_count
--- FROM transactions t
--- JOIN categories c ON t.category_id = c.id
--- WHERE t.transaction_type = 'expense'
---   AND t.user_id = 1
---   AND DATE_FORMAT(t.date, '%Y-%m') = '2025-09'
--- GROUP BY c.id
--- ORDER BY total_spent DESC;
-
--- Check budget vs actual spending
--- SELECT 
---   c.name as category,
---   b.amount as budget,
---   COALESCE(SUM(t.amount), 0) as spent,
---   (b.amount - COALESCE(SUM(t.amount), 0)) as remaining
--- FROM budgets b
--- JOIN categories c ON b.category_id = c.id
--- LEFT JOIN transactions t ON t.category_id = c.id 
---   AND t.transaction_type = 'expense'
---   AND t.date BETWEEN b.start_date AND b.end_date
--- WHERE b.user_id = 1
---   AND CURDATE() BETWEEN b.start_date AND b.end_date
--- GROUP BY b.id;
+-- Insert test transactions
+INSERT INTO `transactions` (`id`, `user_id`, `account_id`, `category_id`, `amount`, `transaction_type`, `description`, `date`, `created_at`) VALUES
+-- Income transactions
+(1, 1, 2, 1, 25000.00, 'income', 'Зарплата за серпень', '2025-08-10 07:00:00', '2025-10-06 13:20:59'),
+(2, 1, 2, 1, 25000.00, 'income', 'Зарплата за вересень', '2025-09-10 07:00:00', '2025-10-06 13:20:59'),
+(3, 1, 3, 2, 8000.00, 'income', 'Проект для клієнта', '2025-08-15 11:30:00', '2025-10-06 13:20:59'),
+(4, 1, 3, 2, 12000.00, 'income', 'Великий проект', '2025-09-20 13:45:00', '2025-10-06 13:20:59'),
+(5, 1, 1, 3, 2000.00, 'income', 'День народження', '2025-09-05 15:20:00', '2025-10-06 13:20:59'),
+(6, 1, 4, 4, 300.00, 'income', 'Дивіденди', '2025-08-28 06:15:00', '2025-10-06 13:20:59'),
+(7, 1, 1, 5, 1500.00, 'income', 'Продаж старого телефону', '2025-09-15 08:30:00', '2025-10-06 13:20:59'),
+-- Food expenses
+(8, 1, 1, 6, 450.00, 'expense', 'Продукти Сільпо', '2025-08-02 09:20:00', '2025-10-06 13:20:59'),
+(9, 1, 3, 6, 380.00, 'expense', 'Продукти АТБ', '2025-08-08 10:40:00', '2025-10-06 13:20:59'),
+(10, 1, 2, 6, 620.00, 'expense', 'Вечеря в ресторані', '2025-08-14 16:30:00', '2025-10-06 13:20:59'),
+(11, 1, 1, 6, 530.00, 'expense', 'Продукти Фора', '2025-08-18 11:25:00', '2025-10-06 13:20:59'),
+(12, 1, 3, 6, 420.00, 'expense', 'Продукти Сільпо', '2025-08-25 12:50:00', '2025-10-06 13:20:59'),
+(13, 1, 1, 6, 490.00, 'expense', 'Продукти АТБ', '2025-09-01 09:15:00', '2025-10-06 13:20:59'),
+(14, 1, 2, 6, 750.00, 'expense', 'Обід з колегами', '2025-09-06 10:00:00', '2025-10-06 13:20:59'),
+(15, 1, 1, 6, 550.00, 'expense', 'Продукти Фора', '2025-09-12 13:30:00', '2025-10-06 13:20:59'),
+(16, 1, 3, 6, 480.00, 'expense', 'Продукти Сільпо', '2025-09-19 14:20:00'
