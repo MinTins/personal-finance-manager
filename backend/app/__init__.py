@@ -1,54 +1,63 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager
+"""
+Flask application factory
+"""
+from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 import os
-from dotenv import load_dotenv
-
-# Завантажити змінні оточення з .env файлу
-load_dotenv()
-
-# Ініціалізація БД
-db = SQLAlchemy()
-
-# Ініціалізація JWT
-jwt = JWTManager()
 
 def create_app():
-    # Ініціалізація Flask
+    """Create and configure Flask application"""
+    
     app = Flask(__name__)
     
-    # Конфігурація
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev_key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{os.getenv('DB_USER', 'root')}:{os.getenv('DB_PASSWORD', '')}@{os.getenv('DB_HOST', 'localhost')}/{os.getenv('DB_NAME', 'personal_finance_manager')}"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev_jwt_key')
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))
+    # Load configuration
+    env = os.environ.get('FLASK_ENV', 'development')
+    if env == 'production':
+        from config import ProductionConfig
+        app.config.from_object(ProductionConfig)
+    else:
+        from config import DevelopmentConfig
+        app.config.from_object(DevelopmentConfig)
     
-    # Ініціалізація розширень
-    db.init_app(app)
-    jwt.init_app(app)
+    # Initialize extensions
     CORS(app)
+    jwt = JWTManager(app)
     
-    with app.app_context():
-        # Реєстрація blueprints
-        from app.routes.auth import auth_bp
-        from app.routes.transactions import transactions_bp
-        from app.routes.categories import categories_bp
-        from app.routes.budgets import budgets_bp
-        from app.routes.accounts import accounts_bp
-        from app.routes.exchange_rates import exchange_rates_bp
-        from app.routes.admin import admin_bp
-        
-        app.register_blueprint(auth_bp, url_prefix='/api/auth')
-        app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
-        app.register_blueprint(categories_bp, url_prefix='/api/categories')
-        app.register_blueprint(budgets_bp, url_prefix='/api/budgets')
-        app.register_blueprint(accounts_bp, url_prefix='/api/accounts')
-        app.register_blueprint(exchange_rates_bp, url_prefix='/api/exchange-rates')
-        app.register_blueprint(admin_bp, url_prefix='/api/admin')
-        
-        # Створення таблиць БД, якщо вони не існують
-        db.create_all()
+    # Apply security middleware
+    from app.security.security_middleware import SecurityMiddleware
+    SecurityMiddleware.add_security_headers(app)
+    
+    # Initialize rate limiter
+    from app.security.rate_limiter import init_rate_limiter
+    limiter = init_rate_limiter(app)
+    
+    # Register blueprints
+    from app.routes import auth, accounts, categories, transactions, budgets, dashboard
+    
+    app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(accounts.accounts_bp, url_prefix='/api/accounts')
+    app.register_blueprint(categories.categories_bp, url_prefix='/api/categories')
+    app.register_blueprint(transactions.transactions_bp, url_prefix='/api/transactions')
+    app.register_blueprint(budgets.budgets_bp, url_prefix='/api/budgets')
+    app.register_blueprint(dashboard.dashboard_bp, url_prefix='/api/dashboard')
+    
+    # Health check endpoint
+    @app.route('/')
+    @app.route('/health')
+    def health_check():
+        return jsonify({
+            'status': 'healthy',
+            'message': 'Personal Finance Manager API is running'
+        }), 200
+    
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({'error': 'Not found'}), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        return jsonify({'error': 'Internal server error'}), 500
     
     return app

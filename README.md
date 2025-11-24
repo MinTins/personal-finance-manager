@@ -1,407 +1,341 @@
-# Personal Finance Manager 💰
+# Personal Finance Manager - Deployment
 
-**Student:** Roman Flakey, PZS-1  
-**Course:** Development and Use of Information Networks  
-**GitHub:** https://github.com/MinTins/personal-finance-manager
+## 📦 Що в цій папці
 
----
+### Docker файли (Lab 4)
+- `backend.Dockerfile` - Docker образ для backend
+- `frontend.Dockerfile` - Docker образ для frontend
+- `nginx.conf` - Конфігурація Nginx
+- `docker-compose.yml` - Оркестрація сервісів
+- `.env.example` - Приклад environment variables
 
-## Application Screenshots
+### Security файли (Lab 5)
+- `security_middleware.py` - Security headers та валідація
+- `rate_limiter.py` - Захист від brute force
+- `security_test.py` - Автоматичні тести безпеки
 
-### Dashboard
-![Dashboard Screenshot](https://i.ibb.co/b5t9yh7N/2025-10-07-095200762.png)
-*Main dashboard with financial overview, charts, and exchange rates*
+### Deployment скрипти
+- `deploy.sh` - Швидкий deploy на localhost
+- `vps-deploy.sh` - Deploy на VPS сервер
 
-### Transactions Management
-![Transactions Screenshot](https://i.ibb.co/qLMWzR18/2025-10-07-093924429.png)
-*Transaction list with filtering and CRUD operations*
-
-### Budget Tracking
-![Budget Screenshot](https://i.ibb.co/Gvc09Vnp/2025-10-07-094017018.png)
-*Budget management and spending tracking*
-
----
-
-## Project Description
-
-Personal Finance Manager is a full-stack web application for managing personal finances with the ability to track income, expenses, create budgets, and visualize financial activity.
-
-### Laboratory Work Progress:
-
-✅ **Lab #1** - Backend Development (Flask, MySQL, REST API, Admin Panel) - **COMPLETED**  
-✅ **Lab #2** - Frontend Development (React, Dynamic Interface) - **COMPLETED**  
-✅ **Lab #3** - Web API (REST endpoints, JWT Authentication) - **COMPLETED**  
-⏳ **Lab #4** - Deployment and Performance  
-⏳ **Lab #5** - Web Application Security
+### Код файли
+- `budgets.py` - Backend для бюджетів (виправлений)
+- `BudgetList.jsx` - Frontend для бюджетів (виправлений)
+- `.gitignore` - Ігнорування файлів для git
 
 ---
 
-## Technology Stack
+## 🚀 Швидкий старт (Localhost)
 
-### Backend:
-- **Python 3.10+** - Programming language
-- **Flask 3.0** - Web framework
-- **Flask-SQLAlchemy** - ORM for database interactions
-- **Flask-JWT-Extended** - JWT-based authentication
-- **Flask-CORS** - CORS support for cross-origin requests
-- **MySQL 8.0** - Relational database
-- **PyMySQL** - MySQL driver for Python
-- **python-dotenv** - Environment variable management
+### 1. Підготовка
 
-### Frontend:
-- **React 18** - UI library
-- **Vite** - Build tool and development server
-- **React Router v6** - Client-side routing
-- **Axios** - HTTP client for API requests
-- **Chart.js** with **react-chartjs-2** - Data visualization
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Icons** - Icon library
+```bash
+# Скопіюйте файли в проект:
+cp backend.Dockerfile backend/Dockerfile
+cp frontend.Dockerfile frontend/Dockerfile
+cp nginx.conf frontend/
+cp docker-compose.yml .
+cp .env.example .env
+```
 
-### External API:
-- **ExchangeRate-API** - Real-time currency exchange rates
+### 2. Налаштування
+
+Відредагуйте `.env`:
+```bash
+nano .env
+```
+
+Додайте ваші ключі:
+```env
+SECRET_KEY=згенеруйте_32_символьний_ключ
+JWT_SECRET_KEY=згенеруйте_32_символьний_ключ
+DB_ROOT_PASSWORD=ваш_пароль
+DB_PASSWORD=ваш_пароль
+EXCHANGE_RATE_API_KEY=ваш_api_key
+```
+
+### 3. Запуск
+
+```bash
+# Автоматично
+chmod +x deploy.sh
+./deploy.sh
+
+# АБО вручну
+docker-compose up -d --build
+```
+
+### 4. Доступ
+
+- Frontend: http://localhost
+- Backend API: http://localhost/api
+- MySQL: localhost:3306
 
 ---
 
-## Database Structure
+## 🌍 Deploy на VPS
 
-The application uses a relational MySQL database with the following entities:
+### Автоматичний
 
-### Main Tables:
-- **users** - User accounts with authentication data
-- **accounts** - Financial accounts (wallets, bank accounts, cards)
-- **categories** - Transaction categories (income/expense)
-- **transactions** - Financial transactions
-- **budgets** - Budget planning by categories
+```bash
+# На VPS сервері (Ubuntu 22.04/24.04)
+wget https://your-repo/vps-deploy.sh
+sudo bash vps-deploy.sh
+```
 
-### Database EER Diagram:
-![Database EER Diagram](https://i.ibb.co/S4M5KqHg/2025-10-07-103105084.png)
+### Ручний
+
+```bash
+# 1. Встановлення Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# 2. Встановлення Docker Compose
+sudo apt-get install docker-compose-plugin
+
+# 3. Firewall
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+
+# 4. Клонування проекту
+cd /var/www
+git clone https://github.com/MinTins/personal-finance-manager.git
+cd personal-finance-manager
+
+# 5. Налаштування .env
+cp .env.example .env
+nano .env
+
+# 6. Запуск
+docker-compose up -d --build
+```
+
+### SSL сертифікат (Let's Encrypt)
+
+```bash
+# Встановлення Certbot
+sudo apt-get install certbot python3-certbot-nginx
+
+# Отримання сертифікату
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+# Автоматичне оновлення
+sudo certbot renew --dry-run
+```
 
 ---
 
-## Project Structure
+## 🔐 Security (Lab 5)
+
+### 1. Інтеграція security middleware
+
+Додайте в `backend/app/__init__.py`:
+
+```python
+from app.security_middleware import SecurityMiddleware
+from app.rate_limiter import init_rate_limiter
+
+# Додайте security headers
+app = SecurityMiddleware.add_security_headers(app)
+
+# Ініціалізуйте rate limiter
+limiter = init_rate_limiter(app)
+```
+
+### 2. Використання в routes
+
+У `backend/app/routes/auth.py`:
+
+```python
+from app.rate_limiter import limiter
+
+@auth_bp.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
+def login():
+    # ... код
+```
+
+### 3. Запуск тестів безпеки
+
+```bash
+# Переконайтеся що backend запущено на localhost:5000
+python security_test.py
+```
+
+Тести перевіряють:
+- ✅ Захист від слабких паролів
+- ✅ Захист від SQL Injection
+- ✅ Захист від XSS
+- ✅ Rate Limiting (Brute Force)
+- ✅ CSRF Protection
+- ✅ Security Headers
+
+---
+
+## 🔧 Корисні команди
+
+### Docker
+
+```bash
+# Перегляд логів
+docker-compose logs -f
+docker-compose logs backend
+docker-compose logs frontend
+
+# Статус контейнерів
+docker-compose ps
+
+# Перезапуск
+docker-compose restart
+docker-compose restart backend
+
+# Зупинка
+docker-compose down
+
+# Повне видалення (з volumes)
+docker-compose down -v
+
+# Перебудова
+docker-compose up -d --build
+
+# Вхід в контейнер
+docker exec -it pfm_backend bash
+docker exec -it pfm_mysql mysql -u root -p
+```
+
+### Моніторинг
+
+```bash
+# Використання ресурсів
+docker stats
+
+# Дисковий простір
+docker system df
+
+# Очищення
+docker system prune -a
+```
+
+---
+
+## 📊 Тестування продуктивності
+
+### Lighthouse (Frontend)
+
+```bash
+npm install -g lighthouse
+lighthouse http://localhost --output html
+```
+
+### Apache Bench (Backend)
+
+```bash
+# Встановлення
+sudo apt-get install apache2-utils
+
+# Тест
+ab -n 1000 -c 10 http://localhost/api/categories
+```
+
+### Очікувані результати
+
+- **Performance**: 95+
+- **Response Time**: <50ms
+- **RPS**: 500+
+- **RAM**: <600MB total
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend не підключається до MySQL
+
+```bash
+# Перевірте логи
+docker-compose logs mysql
+
+# Перевірте health check
+docker inspect pfm_mysql | grep Health
+
+# Зачекайте 30-40 секунд після запуску
+```
+
+### Frontend показує 502
+
+```bash
+# Перевірте backend
+docker-compose logs backend
+
+# Перезапустіть
+docker-compose restart backend
+```
+
+### Порти зайняті
+
+```bash
+# Знайдіть процес
+sudo lsof -i :80
+sudo lsof -i :5000
+
+# Вбийте процес або змініть порти в docker-compose.yml
+```
+
+---
+
+## ✅ Checklist
+
+### Перед запуском
+
+- [ ] Docker встановлено
+- [ ] Docker Compose встановлено
+- [ ] `.env` файл створено
+- [ ] Всі ключі згенеровані
+- [ ] `EXCHANGE_RATE_API_KEY` додано
+- [ ] Порти 80, 5000, 3306 вільні
+- [ ] `database.sql` присутній
+
+### Після запуску
+
+- [ ] Контейнери запущені (`docker-compose ps`)
+- [ ] Frontend відкривається
+- [ ] Backend API відповідає
+- [ ] Можна зареєструватися
+- [ ] Можна створити транзакцію
+- [ ] Security тести пройдені
+
+---
+
+## 📝 Структура файлів у проекті
 
 ```
 personal-finance-manager/
-│
-├── backend/                    # Backend application
+├── backend/
+│   ├── Dockerfile              ← backend.Dockerfile
 │   ├── app/
-│   │   ├── __init__.py        # Flask app initialization
-│   │   ├── models.py          # Database models (User, Account, Transaction, etc.)
-│   │   ├── config.py          # Configuration classes
-│   │   └── routes/            # API route blueprints
-│   │       ├── __init__.py
-│   │       ├── auth.py        # Authentication endpoints
-│   │       ├── accounts.py    # Account management
-│   │       ├── transactions.py # Transaction CRUD
-│   │       ├── categories.py  # Category management
-│   │       ├── budgets.py     # Budget endpoints
-│   │       └── exchange_rates.py # Currency exchange rates
-│   ├── venv/                  # Virtual environment
-│   ├── run.py                 # Application entry point
-│   ├── requirements.txt       # Python dependencies
-│   └── .env                   # Environment variables
-│
-├── frontend/                  # Frontend application
-│   ├── public/                # Static assets
+│   │   ├── __init__.py
+│   │   ├── routes/
+│   │   │   └── budgets.py      ← budgets.py (оновлений)
+│   │   └── security/           ← нова папка
+│   │       ├── middleware.py   ← security_middleware.py
+│   │       └── rate_limiter.py ← rate_limiter.py
+│   └── ...
+├── frontend/
+│   ├── Dockerfile              ← frontend.Dockerfile
+│   ├── nginx.conf              ← nginx.conf
 │   ├── src/
-│   │   ├── components/        # React components
-│   │   │   ├── Auth/          # Login, Register
-│   │   │   ├── Dashboard/     # Main dashboard
-│   │   │   ├── Transactions/  # Transaction management
-│   │   │   ├── Categories/    # Category management
-│   │   │   ├── Budgets/       # Budget management
-│   │   │   ├── Accounts/      # Account management
-│   │   │   └── common/        # Navbar, Sidebar, etc.
-│   │   ├── services/          # API service functions
-│   │   │   ├── api.js         # Axios configuration
-│   │   │   ├── auth.js        # Authentication API
-│   │   │   ├── transactions.js
-│   │   │   ├── categories.js
-│   │   │   ├── budgets.js
-│   │   │   └── accounts.js
-│   │   ├── App.jsx            # Main application component
-│   │   ├── main.jsx           # React entry point
-│   │   └── index.css          # Global styles (Tailwind)
-│   ├── package.json           # Node dependencies
-│   ├── vite.config.js         # Vite configuration
-│   └── tailwind.config.js     # Tailwind CSS configuration
-│
-├── .gitignore                 # Git ignore rules
-└── README.md                  # Project documentation
+│   │   └── components/
+│   │       └── Budget/
+│   │           └── BudgetList.jsx ← BudgetList.jsx (оновлений)
+│   └── ...
+├── docker-compose.yml          ← docker-compose.yml
+├── .env                        ← створити з .env.example
+├── .gitignore                  ← .gitignore
+├── deploy.sh                   ← deploy.sh
+└── security_test.py            ← security_test.py
 ```
 
 ---
 
-## Core Functionality
-
-### Authentication & Authorization:
-- User registration with email and password
-- JWT-based login system
-- Protected API routes requiring authentication
-- Token-based session management
-
-### Transaction Management:
-- Add income and expense transactions
-- Transaction categorization
-- Edit and delete transactions
-- Filter by date, category, and account
-- Transaction history with detailed views
-
-### Account Management:
-- Create multiple accounts (wallets, bank accounts, cards)
-- Track balance for each account
-- Multi-currency support
-- Active/inactive account status
-
-### Categories:
-- Create custom income and expense categories
-- Color-coded categories for better visualization
-- Category-based transaction filtering
-
-### Budgets:
-- Create budgets by category
-- Track spending against budget limits
-- Periodic budgets (weekly, monthly, yearly)
-- Budget progress visualization
-
-### Data Visualization:
-- Income vs. expense charts
-- Category distribution pie charts
-- Period-based statistics
-- Financial trends over time
-
-### External API Integration:
-- Real-time currency exchange rates
-- Multi-currency conversion
-- Automatic rate updates
-
----
-
-## Quick Start
-
-### Prerequisites:
-- Python 3.10+
-- Node.js 18+
-- MySQL 8.0
-- Git
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/MinTins/personal-finance-manager.git
-cd personal-finance-manager
-```
-
-### 2. Backend Setup
-
-#### Create and activate virtual environment:
-```bash
-cd backend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-#### Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-#### Configure environment variables:
-Create `.env` file in the `backend` directory:
-```env
-SECRET_KEY=your_secret_key
-JWT_SECRET_KEY=your_jwt_secret_key
-JWT_ACCESS_TOKEN_EXPIRES=3600
-
-DB_USER=root
-DB_PASSWORD=your_password
-DB_HOST=localhost
-DB_NAME=personal_finance_manager
-
-EXCHANGE_RATE_API_KEY=your_api_key
-```
-
-#### Create MySQL database:
-```sql
-CREATE DATABASE personal_finance_manager;
-```
-
-#### Run backend server:
-```bash
-python run.py
-```
-Backend will be available at: `http://localhost:5000`
-
-### 3. Frontend Setup
-
-#### Navigate to frontend directory:
-```bash
-cd ../frontend
-```
-
-#### Install dependencies:
-```bash
-npm install
-```
-
-#### Configure API proxy:
-Edit `vite.config.js` if needed (default proxies to `http://localhost:5000`)
-
-#### Run development server:
-```bash
-npm run dev
-```
-Frontend will be available at: `http://localhost:5173`
-
----
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user info
-
-### Accounts
-- `GET /api/accounts` - Get all accounts
-- `POST /api/accounts` - Create new account
-- `GET /api/accounts/:id` - Get specific account
-- `PUT /api/accounts/:id` - Update account
-- `DELETE /api/accounts/:id` - Delete account
-
-### Transactions
-- `GET /api/transactions` - Get all transactions (with filters)
-- `POST /api/transactions` - Create new transaction
-- `GET /api/transactions/:id` - Get specific transaction
-- `PUT /api/transactions/:id` - Update transaction
-- `DELETE /api/transactions/:id` - Delete transaction
-- `GET /api/transactions/summary` - Get transaction statistics
-
-### Categories
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create new category
-- `GET /api/categories/:id` - Get specific category
-- `PUT /api/categories/:id` - Update category
-- `DELETE /api/categories/:id` - Delete category
-
-### Budgets
-- `GET /api/budgets` - Get all budgets
-- `POST /api/budgets` - Create new budget
-- `GET /api/budgets/:id` - Get specific budget
-- `PUT /api/budgets/:id` - Update budget
-- `DELETE /api/budgets/:id` - Delete budget
-
-### Exchange Rates
-- `GET /api/exchange-rates/:currency` - Get exchange rates for currency
-
----
-
-## Key Features Implemented
-
-### Lab #1 - Backend (✅ Completed):
-- Flask application structure with blueprints
-- MySQL database with proper schema design
-- SQLAlchemy ORM models for all entities
-- RESTful API endpoints for CRUD operations
-- JWT-based authentication system
-- Database relationships and cascade deletes
-- Input validation and error handling
-
-### Lab #2 - Frontend (✅ Completed):
-- React application with modern component architecture
-- React Router for navigation
-- Responsive design with Tailwind CSS
-- Dynamic forms for data entry
-- Data visualization with Chart.js
-- User-friendly interface with icons
-- State management for authentication
-- Protected routes for authenticated users
-
-### Lab #3 - Web API (✅ Completed):
-- Complete REST API implementation
-- JWT token-based authentication
-- Protected endpoints with `@jwt_required` decorator
-- Request/response handling with JSON
-- External API integration (ExchangeRate-API)
-- CORS configuration for cross-origin requests
-- Axios interceptors for automatic token handling
-- Error handling and user feedback
-
----
-
-## Future Development (Labs #4-5)
-
-### Lab #4 - Deployment & Performance:
-- Deploy application to production server
-- Set up localhost deployment
-- Performance testing and optimization
-- Load testing with multiple users
-- Database query optimization
-- Caching strategies
-- Production configuration
-
-### Lab #5 - Security:
-- Security vulnerability assessment
-- Input sanitization and validation
-- SQL injection prevention
-- XSS protection
-- CSRF token implementation
-- Rate limiting
-- Security headers
-- Password strength requirements
-- Account lockout mechanisms
-- Security audit report
-
----
-
-## Development Commands
-
-### Backend:
-```bash
-# Activate virtual environment
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# Run development server
-python run.py
-
-# Install new package
-pip install package_name
-pip freeze > requirements.txt
-```
-
-### Frontend:
-```bash
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Install new package
-npm install package_name
-```
-
----
-
-## Contributing
-
-This is an academic project for learning purposes. The implementation follows best practices for:
-- RESTful API design
-- React component architecture
-- Database normalization
-- Authentication and authorization
-- Security considerations
-
----
-
-## License
-
-This project is created for educational purposes as part of the "Development and Use of Information Networks" course.
+**Виконав:** Roman Flakey, PZS-1  
+**Дата:** 24.11.2025
