@@ -88,8 +88,24 @@ def create_budget():
     if not all(k in data for k in ('category_id', 'amount', 'start_date', 'end_date')):
         return jsonify({'error': 'Missing required fields'}), 400
     
+    # Валідація category_id
+    try:
+        category_id = int(data['category_id'])
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid category_id'}), 400
+    
+    # Валідація amount
+    try:
+        amount = float(data['amount'])
+        if amount <= 0:
+            return jsonify({'error': 'Amount must be greater than zero'}), 400
+        if amount > 9999999999999.99:
+            return jsonify({'error': 'Amount is too large'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid amount'}), 400
+    
     # Перевірка чи існує категорія і вона належить користувачу
-    category = Category.query.filter_by(id=data['category_id'], user_id=user_id).first()
+    category = Category.query.filter_by(id=category_id, user_id=user_id).first()
     if not category:
         return jsonify({'error': 'Category not found'}), 404
     
@@ -99,12 +115,34 @@ def create_budget():
     
     # Створення нового бюджету
     try:
+        start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+        end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+        
+        # Валідація дат
+        if end_date <= start_date:
+            return jsonify({'error': 'End date must be after start date'}), 400
+        
+        # Перевірка що бюджет на цю категорію в цей період ще не існує
+        existing_budget = Budget.query.filter_by(
+            user_id=user_id,
+            category_id=category_id
+        ).filter(
+            db.or_(
+                db.and_(Budget.start_date >= start_date, Budget.start_date <= end_date),
+                db.and_(Budget.end_date >= start_date, Budget.end_date <= end_date),
+                db.and_(Budget.start_date <= start_date, Budget.end_date >= end_date)
+            )
+        ).first()
+        
+        if existing_budget:
+            return jsonify({'error': 'Budget for this category already exists in this period'}), 400
+        
         new_budget = Budget(
             user_id=user_id,
-            category_id=data['category_id'],
-            amount=data['amount'],
-            start_date=datetime.strptime(data['start_date'], '%Y-%m-%d').date(),
-            end_date=datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            category_id=category_id,
+            amount=amount,
+            start_date=start_date,
+            end_date=end_date
         )
         
         db.session.add(new_budget)
@@ -179,27 +217,46 @@ def update_budget(budget_id):
     
     # Оновлення полів
     if 'category_id' in data:
-        category = Category.query.filter_by(id=data['category_id'], user_id=user_id).first()
+        try:
+            category_id = int(data['category_id'])
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid category_id'}), 400
+            
+        category = Category.query.filter_by(id=category_id, user_id=user_id).first()
         if not category:
             return jsonify({'error': 'Category not found'}), 404
         if category.type != 'expense':
             return jsonify({'error': 'Budget can only be created for expense categories'}), 400
-        budget.category_id = data['category_id']
+        budget.category_id = category_id
     
     if 'amount' in data:
-        budget.amount = data['amount']
+        try:
+            amount = float(data['amount'])
+            if amount <= 0:
+                return jsonify({'error': 'Amount must be greater than zero'}), 400
+            if amount > 9999999999999.99:
+                return jsonify({'error': 'Amount is too large'}), 400
+            budget.amount = amount
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid amount'}), 400
     
     if 'start_date' in data:
         try:
-            budget.start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+            start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+            budget.start_date = start_date
         except ValueError:
             return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
     
     if 'end_date' in data:
         try:
-            budget.end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            budget.end_date = end_date
         except ValueError:
             return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+    
+    # Валідація дат після всіх змін
+    if budget.end_date <= budget.start_date:
+        return jsonify({'error': 'End date must be after start date'}), 400
     
     db.session.commit()
     
