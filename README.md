@@ -24,15 +24,15 @@
 
 ## Project Description
 
-Personal Finance Manager is a full-stack web application for managing personal finances with the ability to track income, expenses, create budgets, and visualize financial activity.
+Personal Finance Manager is a comprehensive full-stack web application for managing personal finances with the ability to track income, expenses, create budgets, visualize financial activity, and includes a complete admin panel for system management.
 
 ### Laboratory Work Progress:
 
 ✅ **Lab #1** - Backend Development (Flask, MySQL, REST API, Admin Panel) - **COMPLETED**  
 ✅ **Lab #2** - Frontend Development (React, Dynamic Interface) - **COMPLETED**  
 ✅ **Lab #3** - Web API (REST endpoints, JWT Authentication) - **COMPLETED**  
-⏳ **Lab #4** - Deployment and Performance  
-⏳ **Lab #5** - Web Application Security
+✅ **Lab #4** - Deployment and Performance Testing - **COMPLETED**  
+✅ **Lab #5** - Web Application Security Testing - **COMPLETED**
 
 ---
 
@@ -47,215 +47,147 @@ Personal Finance Manager is a full-stack web application for managing personal f
 - **MySQL 8.0** - Relational database
 - **PyMySQL** - MySQL driver for Python
 - **python-dotenv** - Environment variable management
+- **bcrypt** - Password hashing
 
 ### Frontend:
 - **React 18** - UI library
-- **Vite** - Build tool and development server
+- **Vite 5** - Build tool and development server
 - **React Router v6** - Client-side routing
 - **Axios** - HTTP client for API requests
 - **Chart.js** with **react-chartjs-2** - Data visualization
 - **Tailwind CSS** - Utility-first CSS framework
 - **React Icons** - Icon library
 
-### External API:
+### DevOps & Deployment:
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
+- **Nginx** - Web server for production
+
+### External APIs:
 - **ExchangeRate-API** - Real-time currency exchange rates
 
 ---
 
-## Database Structure
+## Quick Start Options
 
-The application uses a relational MySQL database with the following entities:
+### Option 1: Windows Batch Scripts (Recommended)
 
-### Main Tables:
-- **users** - User accounts with authentication data
-- **accounts** - Financial accounts (wallets, bank accounts, cards)
-- **categories** - Transaction categories (income/expense)
-- **transactions** - Financial transactions
-- **budgets** - Budget planning by categories
-
-### Database EER Diagram:
-![Database EER Diagram](https://i.ibb.co/S4M5KqHg/2025-10-07-103105084.png)
-
----
-
-## Project Structure
-
-```
-personal-finance-manager/
-│
-├── backend/                    # Backend application
-│   ├── app/
-│   │   ├── __init__.py        # Flask app initialization
-│   │   ├── models.py          # Database models (User, Account, Transaction, etc.)
-│   │   ├── config.py          # Configuration classes
-│   │   └── routes/            # API route blueprints
-│   │       ├── __init__.py
-│   │       ├── auth.py        # Authentication endpoints
-│   │       ├── accounts.py    # Account management
-│   │       ├── transactions.py # Transaction CRUD
-│   │       ├── categories.py  # Category management
-│   │       ├── budgets.py     # Budget endpoints
-│   │       └── exchange_rates.py # Currency exchange rates
-│   ├── venv/                  # Virtual environment
-│   ├── run.py                 # Application entry point
-│   ├── requirements.txt       # Python dependencies
-│   └── .env                   # Environment variables
-│
-├── frontend/                  # Frontend application
-│   ├── public/                # Static assets
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   │   ├── Auth/          # Login, Register
-│   │   │   ├── Dashboard/     # Main dashboard
-│   │   │   ├── Transactions/  # Transaction management
-│   │   │   ├── Categories/    # Category management
-│   │   │   ├── Budgets/       # Budget management
-│   │   │   ├── Accounts/      # Account management
-│   │   │   └── common/        # Navbar, Sidebar, etc.
-│   │   ├── services/          # API service functions
-│   │   │   ├── api.js         # Axios configuration
-│   │   │   ├── auth.js        # Authentication API
-│   │   │   ├── transactions.js
-│   │   │   ├── categories.js
-│   │   │   ├── budgets.js
-│   │   │   └── accounts.js
-│   │   ├── App.jsx            # Main application component
-│   │   ├── main.jsx           # React entry point
-│   │   └── index.css          # Global styles (Tailwind)
-│   ├── package.json           # Node dependencies
-│   ├── vite.config.js         # Vite configuration
-│   └── tailwind.config.js     # Tailwind CSS configuration
-│
-├── .gitignore                 # Git ignore rules
-└── README.md                  # Project documentation
-```
-
----
-
-## Core Functionality
-
-### Authentication & Authorization:
-- User registration with email and password
-- JWT-based login system
-- Protected API routes requiring authentication
-- Token-based session management
-
-### Transaction Management:
-- Add income and expense transactions
-- Transaction categorization
-- Edit and delete transactions
-- Filter by date, category, and account
-- Transaction history with detailed views
-
-### Account Management:
-- Create multiple accounts (wallets, bank accounts, cards)
-- Track balance for each account
-- Multi-currency support
-- Active/inactive account status
-
-### Categories:
-- Create custom income and expense categories
-- Color-coded categories for better visualization
-- Category-based transaction filtering
-
-### Budgets:
-- Create budgets by category
-- Track spending against budget limits
-- Periodic budgets (weekly, monthly, yearly)
-- Budget progress visualization
-
-### Data Visualization:
-- Income vs. expense charts
-- Category distribution pie charts
-- Period-based statistics
-- Financial trends over time
-
-### External API Integration:
-- Real-time currency exchange rates
-- Multi-currency conversion
-- Automatic rate updates
-
----
-
-## Quick Start
-
-### Prerequisites:
-- Python 3.10+
-- Node.js 18+
-- MySQL 8.0
-- Git
-
-### 1. Clone Repository
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/MinTins/personal-finance-manager.git
 cd personal-finance-manager
 ```
 
-### 2. Backend Setup
+2. **Start servers:**
+```bash
+start.bat
+```
 
-#### Create and activate virtual environment:
+3. **Access the application:**
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:5000
+
+4. **Stop servers:**
+```bash
+stop.bat
+```
+
+### Option 2: Docker (Production)
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/MinTins/personal-finance-manager.git
+cd personal-finance-manager
+```
+
+2. **Configure environment:**
+```bash
+cp .env.example .env
+# Edit .env file with your settings
+```
+
+3. **Start with Docker Compose:**
+```bash
+docker-compose up -d --build
+```
+
+4. **Access the application:**
+   - Frontend: http://localhost
+   - Backend API: http://localhost:5000
+   - Database: localhost:3306
+
+### Option 3: Manual Setup
+
+**Prerequisites:**
+- Python 3.10+
+- Node.js 18+
+- MySQL 8.0
+
+**Backend Setup:**
 ```bash
 cd backend
 python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-#### Install dependencies:
-```bash
+# Windows: venv\Scripts\activate
+# Linux/Mac: source venv/bin/activate
 pip install -r requirements.txt
-```
-
-#### Configure environment variables:
-Create `.env` file in the `backend` directory:
-```env
-SECRET_KEY=your_secret_key
-JWT_SECRET_KEY=your_jwt_secret_key
-JWT_ACCESS_TOKEN_EXPIRES=3600
-
-DB_USER=root
-DB_PASSWORD=your_password
-DB_HOST=localhost
-DB_NAME=personal_finance_manager
-
-EXCHANGE_RATE_API_KEY=your_api_key
-```
-
-#### Create MySQL database:
-```sql
-CREATE DATABASE personal_finance_manager;
-```
-
-#### Run backend server:
-```bash
+cp .env.example .env
+# Edit .env file
 python run.py
 ```
-Backend will be available at: `http://localhost:5000`
 
-### 3. Frontend Setup
-
-#### Navigate to frontend directory:
+**Frontend Setup:**
 ```bash
-cd ../frontend
-```
-
-#### Install dependencies:
-```bash
+cd frontend
 npm install
-```
-
-#### Configure API proxy:
-Edit `vite.config.js` if needed (default proxies to `http://localhost:5000`)
-
-#### Run development server:
-```bash
 npm run dev
 ```
-Frontend will be available at: `http://localhost:5173`
+
+---
+
+## Database Structure
+
+The application uses a comprehensive MySQL database schema with the following entities:
+
+### Core Tables:
+- **users** - User accounts with role-based access (user/admin)
+- **accounts** - Financial accounts with multi-currency support
+- **categories** - Transaction categories with color coding
+- **transactions** - Financial transactions with categorization
+- **budgets** - Budget planning by categories and time periods
+- **admin_logs** - Admin activity logging for audit trails
+
+### Advanced Features:
+- **Stored Procedures** - `get_system_statistics()` for admin dashboard
+- **Views** - `user_statistics` for comprehensive user analytics
+- **Triggers** - Automatic logging of user deletions
+- **Foreign Key Constraints** - Data integrity and cascade operations
+- **Indexes** - Optimized queries for better performance
+
+---
+
+## Core Functionality
+
+### User Features:
+- **Authentication & Authorization** - JWT-based secure login system
+- **Account Management** - Multiple accounts with different currencies
+- **Transaction Management** - Complete CRUD with advanced filtering
+- **Category System** - Custom categories with visual color coding
+- **Budget Planning** - Create and track budgets with progress visualization
+- **Financial Dashboard** - Real-time charts and statistics
+- **Currency Exchange** - Live exchange rates integration
+
+### Admin Features:
+- **User Management** - View, edit, and delete users
+- **System Dashboard** - Comprehensive system statistics
+- **Activity Logging** - Track all admin actions
+- **Database Analytics** - User statistics and system health
+- **Bulk Operations** - Manage multiple users efficiently
+
+### Data Visualization:
+- **Interactive Charts** - Income vs. expense analysis
+- **Category Breakdown** - Pie charts for spending distribution
+- **Budget Progress** - Visual budget tracking with color-coded alerts
+- **Financial Trends** - Time-based financial analysis
 
 ---
 
@@ -266,142 +198,264 @@ Frontend will be available at: `http://localhost:5173`
 - `POST /api/auth/login` - User login
 - `GET /api/auth/me` - Get current user info
 
-### Accounts
-- `GET /api/accounts` - Get all accounts
+### User Operations
+- `GET /api/accounts` - Get all user accounts
 - `POST /api/accounts` - Create new account
-- `GET /api/accounts/:id` - Get specific account
-- `PUT /api/accounts/:id` - Update account
-- `DELETE /api/accounts/:id` - Delete account
-
-### Transactions
-- `GET /api/transactions` - Get all transactions (with filters)
+- `GET/PUT/DELETE /api/accounts/:id` - Account CRUD operations
+- `GET /api/transactions` - Get transactions with filtering
 - `POST /api/transactions` - Create new transaction
-- `GET /api/transactions/:id` - Get specific transaction
-- `PUT /api/transactions/:id` - Update transaction
-- `DELETE /api/transactions/:id` - Delete transaction
-- `GET /api/transactions/summary` - Get transaction statistics
+- `GET/PUT/DELETE /api/transactions/:id` - Transaction CRUD operations
+- `GET /api/transactions/summary` - Financial statistics
+- `GET/POST/PUT/DELETE /api/categories` - Category management
+- `GET/POST/PUT/DELETE /api/budgets` - Budget management
+- `GET /api/exchange-rates` - Currency exchange rates
 
-### Categories
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create new category
-- `GET /api/categories/:id` - Get specific category
-- `PUT /api/categories/:id` - Update category
-- `DELETE /api/categories/:id` - Delete category
-
-### Budgets
-- `GET /api/budgets` - Get all budgets
-- `POST /api/budgets` - Create new budget
-- `GET /api/budgets/:id` - Get specific budget
-- `PUT /api/budgets/:id` - Update budget
-- `DELETE /api/budgets/:id` - Delete budget
-
-### Exchange Rates
-- `GET /api/exchange-rates/:currency` - Get exchange rates for currency
+### Admin Operations
+- `GET /api/admin/dashboard` - System statistics
+- `GET /api/admin/users` - User management with pagination
+- `GET/PUT/DELETE /api/admin/users/:id` - User operations
+- `GET /api/admin/logs` - Admin activity logs
+- `GET /api/admin/system-info` - System information
 
 ---
 
-## Key Features Implemented
+## Security Features
 
-### Lab #1 - Backend (✅ Completed):
-- Flask application structure with blueprints
-- MySQL database with proper schema design
-- SQLAlchemy ORM models for all entities
-- RESTful API endpoints for CRUD operations
-- JWT-based authentication system
-- Database relationships and cascade deletes
-- Input validation and error handling
+### Implemented Security Measures:
+- **JWT Authentication** - Secure token-based authentication
+- **Password Hashing** - bcrypt for secure password storage
+- **Input Validation** - Server-side validation for all inputs
+- **SQL Injection Protection** - ORM-based queries
+- **XSS Protection** - Input sanitization
+- **CORS Configuration** - Proper cross-origin resource sharing
+- **Role-Based Access Control** - Admin and user roles
+- **Rate Limiting Ready** - Infrastructure for API rate limiting
 
-### Lab #2 - Frontend (✅ Completed):
-- React application with modern component architecture
-- React Router for navigation
-- Responsive design with Tailwind CSS
-- Dynamic forms for data entry
-- Data visualization with Chart.js
-- User-friendly interface with icons
-- State management for authentication
-- Protected routes for authenticated users
-
-### Lab #3 - Web API (✅ Completed):
-- Complete REST API implementation
-- JWT token-based authentication
-- Protected endpoints with `@jwt_required` decorator
-- Request/response handling with JSON
-- External API integration (ExchangeRate-API)
-- CORS configuration for cross-origin requests
-- Axios interceptors for automatic token handling
-- Error handling and user feedback
+### Security Testing:
+The application includes a comprehensive security testing suite (`security-test/security_test.py`) that checks for:
+- SQL Injection vulnerabilities
+- Cross-Site Scripting (XSS)
+- Broken Authentication
+- Insecure Direct Object References (IDOR)
+- Weak Password Policies
+- Brute Force Protection
+- Security Headers
+- Sensitive Data Exposure
 
 ---
 
-## Future Development (Labs #4-5)
+## Performance Testing
 
-### Lab #4 - Deployment & Performance:
-- Deploy application to production server
-- Set up localhost deployment
-- Performance testing and optimization
-- Load testing with multiple users
-- Database query optimization
-- Caching strategies
-- Production configuration
+The application includes automated performance testing (`deploy-performance/performance_test.py`):
 
-### Lab #5 - Security:
-- Security vulnerability assessment
-- Input sanitization and validation
-- SQL injection prevention
-- XSS protection
-- CSRF token implementation
-- Rate limiting
-- Security headers
-- Password strength requirements
-- Account lockout mechanisms
-- Security audit report
+### Test Coverage:
+- **Load Testing** - Multiple concurrent users
+- **Response Time Analysis** - API endpoint performance
+- **Stress Testing** - System behavior under load
+- **Database Performance** - Query optimization testing
+- **Memory Usage** - Resource consumption analysis
+
+### Performance Metrics:
+- Response times for all API endpoints
+- Database query execution times
+- Memory and CPU usage under load
+- Concurrent user handling capacity
+- Error rates under stress conditions
 
 ---
 
-## Development Commands
+## Development Scripts
 
-### Backend:
-```bash
-# Activate virtual environment
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
+### Windows Batch Scripts:
+- `start.bat` - Start both frontend and backend servers
+- `stop.bat` - Stop all running servers
+- `restart.bat` - Restart servers
+- `run-tests.bat` - Execute performance tests
 
-# Run development server
-python run.py
+### Key Features:
+- Automatic dependency installation
+- Environment setup
+- Process management
+- Colored console output
+- Error handling
 
-# Install new package
-pip install package_name
-pip freeze > requirements.txt
+---
+
+## Project Structure
+
+```
+personal-finance-manager/
+│
+├── 📁 backend/                 # Flask Backend
+│   ├── 📁 app/
+│   │   ├── __init__.py        # Flask app factory
+│   │   ├── models.py          # SQLAlchemy models
+│   │   ├── config.py          # Configuration classes
+│   │   └── 📁 routes/         # API blueprints
+│   │       ├── auth.py        # Authentication
+│   │       ├── transactions.py # Transactions
+│   │       ├── categories.py  # Categories
+│   │       ├── budgets.py     # Budgets
+│   │       ├── accounts.py    # Accounts
+│   │       ├── admin.py       # Admin panel
+│   │       └── exchange_rates.py # Currency API
+│   ├── requirements.txt       # Python dependencies
+│   └── run.py                 # Application entry point
+│
+├── 📁 frontend/                # React Frontend
+│   ├── 📁 src/
+│   │   ├── 📁 components/     # React components
+│   │   │   ├── Auth/          # Authentication forms
+│   │   │   ├── Dashboard/     # Main dashboard
+│   │   │   ├── Transactions/  # Transaction management
+│   │   │   ├── Categories/    # Category management
+│   │   │   ├── Budgets/       # Budget management
+│   │   │   ├── Accounts/      # Account management
+│   │   │   ├── Admin/         # Admin panel components
+│   │   │   └── common/        # Shared components
+│   │   ├── 📁 services/       # API services
+│   │   ├── 📁 utils/          # Utility functions
+│   │   └── App.jsx            # Main app component
+│   ├── package.json           # Node dependencies
+│   └── tailwind.config.js     # Styling configuration
+│
+├── 📁 deploy-performance/      # Performance Testing
+│   ├── performance_test.py    # Automated performance tests
+│   └── requirements.txt       # Testing dependencies
+│
+├── 📁 security-test/          # Security Testing
+│   ├── security_test.py       # Security vulnerability tests
+│   └── requirements.txt       # Security testing dependencies
+│
+├── 📄 database.sql            # Complete database schema
+├── 📄 docker-compose.yml      # Docker orchestration
+├── 📄 Dockerfile.backend      # Backend container
+├── 📄 Dockerfile.frontend     # Frontend container
+├── 📄 start.bat              # Windows start script
+├── 📄 stop.bat               # Windows stop script
+├── 📄 restart.bat            # Windows restart script
+├── 📄 run-tests.bat          # Windows testing script
+└── 📄 README.md              # Project documentation
 ```
 
-### Frontend:
+---
+
+## Laboratory Work Achievements
+
+### Lab #1 - Backend Development ✅
+- Complete Flask application with modular blueprint structure
+- MySQL database with normalized schema design
+- RESTful API with CRUD operations
+- JWT-based authentication system
+- Admin panel with user management capabilities
+- Database relationships and constraints
+- Input validation and error handling
+- Comprehensive API documentation
+
+### Lab #2 - Frontend Development ✅
+- Modern React 18 application with hooks
+- Responsive design using Tailwind CSS
+- Dynamic component architecture
+- Real-time data visualization with Chart.js
+- User-friendly forms with validation
+- Protected route system
+- State management for authentication
+- Admin interface for system management
+
+### Lab #3 - Web API Integration ✅
+- Complete REST API implementation
+- JWT token management with refresh capability
+- External API integration (ExchangeRate-API)
+- CORS configuration for cross-origin requests
+- Axios interceptors for request/response handling
+- Comprehensive error handling
+- API documentation and testing
+- JSON request/response handling
+
+### Lab #4 - Deployment & Performance ✅
+- Docker containerization with multi-stage builds
+- Docker Compose for orchestration
+- Automated deployment scripts for Windows
+- Comprehensive performance testing suite
+- Load testing with multiple concurrent users
+- Response time analysis and optimization
+- Database query performance monitoring
+- Memory and resource usage analysis
+
+### Lab #5 - Security Testing ✅
+- Automated security vulnerability scanning
+- SQL injection testing and prevention
+- XSS vulnerability assessment
+- Authentication and authorization testing
+- IDOR (Insecure Direct Object Reference) testing
+- Password policy evaluation
+- Security header analysis
+- Comprehensive security reporting
+
+---
+
+## Test Accounts
+
+**Regular User:**
+- Email: `test@example.com`
+- Password: `password123`
+
+**Administrator:**
+- Email: `admin@example.com`
+- Password: `admin123`
+
+---
+
+## Deployment Options
+
+### Development (Local):
 ```bash
-# Run development server
-npm run dev
+# Using Windows scripts (recommended)
+start.bat
 
-# Build for production
-npm run build
+# Manual setup
+# Backend: http://localhost:5000
+# Frontend: http://localhost:5173
+```
 
-# Preview production build
-npm run preview
+### Production (Docker):
+```bash
+# Copy environment template
+cp .env.example .env
 
-# Install new package
-npm install package_name
+# Start production environment
+docker-compose up -d --build
+
+# Access:
+# Frontend: http://localhost
+# Backend: http://localhost:5000
+```
+
+---
+
+## Testing
+
+### Security Testing:
+```bash
+# Run security tests
+cd security-test
+python security_test.py
 ```
 
 ---
 
 ## Contributing
 
-This is an academic project for learning purposes. The implementation follows best practices for:
-- RESTful API design
-- React component architecture
-- Database normalization
-- Authentication and authorization
-- Security considerations
+This is an academic project demonstrating modern web development practices:
+- **Clean Architecture** - Separation of concerns
+- **RESTful Design** - Standard API conventions
+- **Security Best Practices** - Comprehensive security measures
+- **Performance Optimization** - Efficient database queries and caching
+- **Testing Strategy** - Automated testing for security and performance
+- **Documentation** - Comprehensive project documentation
 
 ---
 
 ## License
 
-This project is created for educational purposes as part of the "Development and Use of Information Networks" course.
+This project is created for educational purposes as part of the "Development and Use of Information Networks" course at the university. All code is available for learning and educational use.
