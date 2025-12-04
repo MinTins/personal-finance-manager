@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-12-04T12:11:50.228344",
+  "target": "http://localhost:5000",
+  "vulnerabilities": [
+    {
+      "test": "Stored XSS",
+      "severity": "HIGH",
+      "description": "Можлива Stored XSS вразливість через назву категорії",
+      "evidence": "Payload збережено: <script>alert('XSS')</script>",
+      "timestamp": "2025-12-04T12:12:11.164068"
+    },
+    {
+      "test": "Weak Password Policy",
+      "severity": "MEDIUM",
+      "description": "Дозволяється використання слабких паролів",
+      "evidence": "Прийнятий пароль: 123 (3 символів)",
+      "timestamp": "2025-12-04T12:12:14.522924"
+    },
+    {
+      "test": "No Brute Force Protection",
+      "severity": "HIGH",
+      "description": "Відсутній захист від brute-force атак на login endpoint",
+      "evidence": "Виконано 10 спроб без блокування",
+      "timestamp": "2025-12-04T12:12:45.284881"
+    },
+    {
+      "test": "Missing Security Headers",
+      "severity": "MEDIUM",
+      "description": "Відсутні важливі security headers",
+      "evidence": "Відсутні: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Strict-Transport-Security",
+      "timestamp": "2025-12-04T12:13:05.644610"
+    }
+  ],
+  "passed_tests": [
+    {
+      "test": "SQL Injection",
+      "description": "Застосунок захищений від SQL ін'єкцій (використовує ORM)",
+      "timestamp": "2025-12-04T12:12:00.590953"
+    },
+    {
+      "test": "Authentication",
+      "description": "JWT автентифікація працює коректно",
+      "timestamp": "2025-12-04T12:12:49.932985"
+    },
+    {
+      "test": "Access Control",
+      "description": "Належна перевірка прав доступу до об'єктів",
+      "timestamp": "2025-12-04T12:13:03.093127"
+    },
+    {
+      "test": "Data Exposure",
+      "description": "Чутливі дані не витікають через API",
+      "timestamp": "2025-12-04T12:13:13.611810"
+    }
+  ],
+  "summary": {
+    "total_tests": 8,
+    "vulnerabilities_found": 4,
+    "tests_passed": 4,
+    "critical": 0,
+    "high": 2,
+    "medium": 2,
+    "low": 0
+  }
+}
