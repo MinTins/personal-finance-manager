@@ -8,3 +8,7 @@ instance
 .vscode/
 .idea/
 *.log
+
+# Performance test results
+deploy-performance/venv/*
+deploy-performance/performance_report_*.json
